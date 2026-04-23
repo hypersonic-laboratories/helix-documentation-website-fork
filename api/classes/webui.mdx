@@ -1,0 +1,233 @@
+---
+title: "WebUI"
+sidebar_position: 4
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# WebUI
+
+The **WebUI** class creates and manages web-based user interfaces within the game. It allows you to display web content (URLs or HTML files) as interactive widgets with full browser functionality powered by Chromium (CEF). WebUI supports all JS frameworks such as Vue.JS, React.JS, and more.
+
+**Authority:** Client -- WebUI instances exist only on the client side.
+
+---
+
+## Constructor
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Create WebUI Widget"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'create', title:'Create Widget', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'class',label:'Class',type:'class',side:'input',value:'WebUI'},
+      {id:'owner',label:'Owning Player',type:'object',side:'input'},
+      {id:'ret',label:'Return Value',type:'object',side:'output'}
+    ]},
+    { id:'add', title:'Add to Viewport', style:'function', x:580, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'create',pin:'ei'}},
+    {from:{node:'create',pin:'eo'},to:{node:'add',pin:'ei'}},
+    {from:{node:'create',pin:'ret'},to:{node:'add',pin:'target'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Create a WebUI from a local HTML file
+local my_ui = WebUI('MyHUD', 'Package/UI/index.html')
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Create a WebUI from a local HTML file
+const myUI = new WebUI("MyHUD", "Package/UI/index.html");
+```
+
+</TabItem>
+</Tabs>
+
+### Constructor Parameters
+
+| Type | Name | Default | Description |
+|---|---|---|---|
+| `string` | `Name` | -- | Unique identifier for logs. |
+| `string` | `Path` | -- | Web URL or HTML file path (e.g., `"https://google.com"` or `"PackageName/Directory/index.html"`). |
+| `number` | `InputMode` | `0` | Which input mode the UI is assigned (0 = Game Only, 1 = UI Only, 2 = Game and UI). |
+
+---
+
+## Methods
+
+| Method | Parameters | Return Type | Authority | Description |
+|---|---|---|---|---|
+| `BringToFront` | -- | `void` | **Client** | Brings the interface to the top of the UI stack. |
+| `SetStackOrder` | `order: number` | `void` | **Client** | Sets the Z-Index for the UI in the stack. |
+| `SetInputMode` | `mode: number` | `void` | **Client** | Sets what type of input the UI receives. 0 = Game Only (No Input), 1 = UI Only (Full Input), 2 = Game and UI (Mouse Focus). |
+| `RegisterEventHandler` | `eventName: string`, `callback: function` | `void` | **Client** | Registers a Lua event handler by name. The callback receives arguments sent from JavaScript and an optional callback function. |
+| `SendEvent` | `eventName: string`, `payload: any` | `void` | **Client** | Sends an event by name to the JavaScript layer through message events. |
+| `Destroy` | -- | `void` | **Client** | Deactivates and destroys the WebUI instance. |
+
+---
+
+## Examples
+
+### Creating a HUD with Event Communication
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="HUD with Event Communication"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'create', title:'Create Widget', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'class',label:'Class',type:'class',side:'input',value:'WebUI'},
+      {id:'owner',label:'Owning Player',type:'object',side:'input'},
+      {id:'ret',label:'Return Value',type:'object',side:'output'}
+    ]},
+    { id:'reg', title:'Register Event Handler', style:'function', x:580, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'name',label:'Event Name',type:'string',side:'input',value:'"Test"'},
+      {id:'callback',label:'Callback',type:'delegate',side:'input'}
+    ]},
+    { id:'send', title:'Send Event', style:'function', x:860, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'name',label:'Event Name',type:'string',side:'input',value:'"Test"'},
+      {id:'payload',label:'Payload',type:'wildcard',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'create',pin:'ei'}},
+    {from:{node:'create',pin:'eo'},to:{node:'reg',pin:'ei'}},
+    {from:{node:'create',pin:'ret'},to:{node:'reg',pin:'target'}},
+    {from:{node:'reg',pin:'eo'},to:{node:'send',pin:'ei'}},
+    {from:{node:'create',pin:'ret'},to:{node:'send',pin:'target'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Client-side: create the HUD
+local hud = WebUI('HUD', 'Package/UI/hud.html')
+
+-- Register an event handler for messages from JavaScript
+hud:RegisterEventHandler('Test', function(arg1, cb)
+    print('Received from JS: ' .. arg1)
+    cb(arg1)  -- optional callback back to JS
+end)
+
+-- Send data to the JavaScript layer
+hud:SendEvent('Test', { test = true })
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Client-side: create the HUD
+const hud = new WebUI("HUD", "Package/UI/hud.html");
+
+// Event handlers and sending follow the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+### Interactive Menu with Input Capture
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Interactive Menu with Input Capture"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'create', title:'Create Widget', style:'function', x:280, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'class',label:'Class',type:'class',side:'input',value:'WebUI'},
+      {id:'owner',label:'Owning Player',type:'object',side:'input'},
+      {id:'ret',label:'Return Value',type:'object',side:'output'}
+    ]},
+    { id:'input', title:'Set Input Mode', style:'function', x:560, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'mode',label:'Mode',type:'int',side:'input',value:'1'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'create',pin:'ei'}},
+    {from:{node:'create',pin:'eo'},to:{node:'input',pin:'ei'}},
+    {from:{node:'create',pin:'ret'},to:{node:'input',pin:'target'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Open an interactive menu with full input capture
+local menu = WebUI('PauseMenu', 'Package/UI/menu.html')
+menu:SetInputMode(1)  -- UI Only: capture mouse and keyboard
+
+-- When closing the menu, return control to the game
+menu:SetInputMode(0)  -- Game Only: release input
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Open an interactive menu with full input capture
+const menu = new WebUI("PauseMenu", "Package/UI/menu.html");
+menu.SetInputMode(1);  // UI Only: capture mouse and keyboard
+
+// When closing the menu, return control to the game
+menu.SetInputMode(0);  // Game Only: release input
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+:::tip
+Always call `Destroy()` on WebUI instances in the global `onShutdown` function to properly clean up resources.
+:::
+
+:::tip
+When using a key to set input mode, the key "released" event will automatically trigger. For example, binding a pressed key to open a WebUI will cause its "released" counterpart to trigger when you use `SetInputMode(1)`.
+:::

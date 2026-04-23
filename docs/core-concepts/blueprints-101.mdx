@@ -1,0 +1,113 @@
+---
+title: "Blueprints 101"
+sidebar_position: 4
+---
+
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Blueprints 101
+
+Blueprints are Unreal Engine's visual scripting system, and they're the **recommended primary language** for building in HELIX. If you've ever used Scratch, node-based tools in Blender, or wired up a pedalboard — you'll feel right at home.
+
+## What Are Blueprints?
+
+Instead of typing lines of code, you place **nodes** on a graph and connect them with **wires**. Each node represents an action (spawn something, play a sound, do math), and the wires control what data flows where and in what order things happen.
+
+It looks like a flowchart because it *is* a flowchart. Your game logic becomes visual and readable at a glance.
+
+Here's what a simple Blueprint graph looks like — when the game starts, it prints a message to the screen:
+
+<BlueprintGraph
+  title="My First Blueprint"
+  width={700}
+  height={240}
+  nodes={[
+    {
+      id: "beginplay",
+      title: "Event BeginPlay",
+      style: "event",
+      x: 30,
+      y: 50,
+      pins: [
+        { id: "exec_out", label: "", type: "exec", side: "output" }
+      ]
+    },
+    {
+      id: "print",
+      title: "Print String",
+      style: "function",
+      x: 320,
+      y: 30,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "string", label: "In String", type: "string", side: "input", value: "Hello HELIX!" },
+        { id: "color", label: "Text Color", type: "struct", side: "input", value: "Cyan" },
+        { id: "duration", label: "Duration", type: "float", side: "input", value: "2.0" }
+      ]
+    }
+  ]}
+  wires={[
+    { from: { node: "beginplay", pin: "exec_out" }, to: { node: "print", pin: "exec_in" } }
+  ]}
+/>
+
+The red node on the left is an **event** — it fires when the game starts. The blue node on the right is a **function** — it does something (prints text). The white wire between them is the **execution wire** that says "after BeginPlay fires, run Print String."
+
+## The Two Types of Wires
+
+- **White "execution" wires** control the *order* things happen — left to right, like reading a sentence. One node finishes, the next one fires.
+- **Colored "data" wires** carry values between nodes — numbers (green), booleans (red), strings (magenta), vectors (gold), and so on.
+
+## Key Building Blocks
+
+### Variables
+
+Store data for later. Health, player name, ammo count, whether a door is open — these are all variables. You create them in the **My Blueprint** panel and drag them into the graph to **Get** (read) or **Set** (write) their values.
+
+Common variable types include:
+
+| Type | Color | Examples |
+|------|-------|----------|
+| **Boolean** | Red | `IsAlive`, `DoorOpen` |
+| **Integer** | Teal | `Score`, `AmmoCount` |
+| **Float** | Green | `Health`, `Speed` |
+| **String** | Magenta | `PlayerName`, `ChatMessage` |
+| **Vector** | Gold | `SpawnLocation`, `Velocity` |
+
+### Functions
+
+Reusable chunks of logic. If you find yourself connecting the same ten nodes over and over, wrap them in a function. Give it a clear name, define input/output pins, and call it whenever you need it. Functions have their own mini-graph that stays tidy and separate from the main Event Graph.
+
+### Custom Events
+
+Events are things that *happen* — the game starts (`BeginPlay`), a player presses a key (`InputAction`), two objects collide (`OnComponentHit`). Events are the red title-bar nodes that kick off your logic chains. You can also create your own **Custom Events** to trigger logic from anywhere, which is great for keeping things modular.
+
+### The Event Graph
+
+This is your main workspace. It's the big canvas where you wire together events, functions, and variables. Every Blueprint class has one, and it's where most of your game logic lives. Right-click anywhere on the canvas to search for nodes, then drag wires between them to build behavior.
+
+## Why Blueprints Are the Primary Language for HELIX
+
+- **Fast iteration** — change logic, hit Play, see results instantly. No waiting around for compiles.
+- **Visual debugging** — watch data flow through wires in real-time during Play mode. The active execution path lights up so you can see exactly what's happening.
+- **Accessible** — you don't need to memorize syntax. The node names tell you what they do.
+- **Performant** — Blueprints compile to optimized bytecode and can be nativized to C++ for shipping builds. They're not a toy; shipping games are built entirely in Blueprints.
+- **First-class HELIX support** — every HELIX API and multiplayer feature is exposed to Blueprints with full node support.
+
+## Getting Started in HELIX Studio
+
+1. Right-click in the Content Browser and select **Blueprint Class**
+2. Choose a parent class — `Actor`, `Character`, `GameMode`, etc.
+3. Open the **Event Graph** tab
+4. Right-click the canvas to search for and place nodes
+5. Drag from pins to create wire connections
+6. Hit **Compile**, then **Play** to test
+
+## When to Go Beyond Blueprints
+
+Blueprints handle the vast majority of game logic beautifully. For performance-critical systems (processing thousands of items per frame, heavy math), you can drop into Lua or JavaScript via HELIX's scripting support. But start with Blueprints — they'll take you further than you might expect.
+
+:::tip
+Use the **context-sensitive** right-click menu. If you drag off a wire and release, the menu filters to nodes that accept that data type. Way faster than browsing the full list.
+:::

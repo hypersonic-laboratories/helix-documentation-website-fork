@@ -1,0 +1,143 @@
+---
+title: "Racing Game Template"
+sidebar_position: 3
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Racing Game Template
+
+The Racing Game template gives you a ready-to-play multiplayer racing experience. It includes a checkpoint system, lap tracking, vehicle selection, and a leaderboard -- everything you need to host races or use as a foundation for a bigger racing game.
+
+## What's Included
+
+- **Sample race track** -- A complete circuit with banked turns, straights, and scenery
+- **Checkpoint system** -- Trigger volumes that track player progress through the course
+- **Lap counter** -- Configurable number of laps per race
+- **Vehicle selection** -- Pre-race lobby where players pick from a set of vehicles
+- **Leaderboard** -- Real-time standings during the race and a results screen at the end
+- **Race HUD** -- Speedometer, position indicator, lap counter, and checkpoint markers
+- **Countdown start** -- Synchronized race start with a 3-2-1 countdown
+
+## How the Checkpoint System Works
+
+The track is built from an ordered list of **checkpoint zones**. When a player's vehicle enters a checkpoint, the system records it and updates their progress. Checkpoints must be hit in order -- skipping one won't count.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Checkpoint overlap detection in RaceManager"
+  nodes={[
+    { id:'overlap', title:'Event ActorBeginOverlap', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'actor',label:'Other Actor',type:'object',side:'output'}
+    ]},
+    { id:'cast', title:'Cast To HVehicle', style:'cast', x:330, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'success',label:'',type:'exec',side:'output'},
+      {id:'fail',label:'Cast Failed',type:'exec',side:'output'},
+      {id:'obj',label:'Object',type:'object',side:'input'},
+      {id:'ret',label:'As HVehicle',type:'object',side:'output'}
+    ]},
+    { id:'update', title:'Update Checkpoint Progress', style:'function', x:630, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'vehicle',label:'Vehicle',type:'object',side:'input'},
+      {id:'idx',label:'Checkpoint Index',type:'int',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'overlap',pin:'eo'},to:{node:'cast',pin:'ei'}},
+    {from:{node:'overlap',pin:'actor'},to:{node:'cast',pin:'obj'}},
+    {from:{node:'cast',pin:'success'},to:{node:'update',pin:'ei'}},
+    {from:{node:'cast',pin:'ret'},to:{node:'update',pin:'vehicle'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Checkpoint configuration in config.lua
+RaceConfig.Checkpoints = {
+    { position = Vector(1200, 500, 50),  radius = 15 },
+    { position = Vector(1400, 800, 50),  radius = 15 },
+    { position = Vector(1600, 1200, 55), radius = 20 },
+    -- ... more checkpoints
+}
+
+RaceConfig.Laps = 3
+RaceConfig.MaxPlayers = 12
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Checkpoint configuration
+const RaceConfig = {
+    checkpoints: [
+        { position: new Vector(1200, 500, 50),  radius: 15 },
+        { position: new Vector(1400, 800, 50),  radius: 15 },
+        { position: new Vector(1600, 1200, 55), radius: 20 },
+        // ... more checkpoints
+    ],
+    laps: 3,
+    maxPlayers: 12
+};
+```
+
+</TabItem>
+</Tabs>
+
+## Lap System
+
+The **finish line** is the first checkpoint in the list. Each time a player crosses it after completing all other checkpoints, their lap counter increments. Once they hit the configured number of laps, they finish the race and their final time is recorded.
+
+The lap system handles edge cases like players going backwards or cutting corners -- only sequential checkpoint completion counts toward progress.
+
+## Vehicle Selection
+
+Before a race starts, players enter a **lobby phase** where they can pick a vehicle from the available roster. Vehicles are defined in the race config:
+
+```lua
+RaceConfig.Vehicles = {
+    { asset = "sports-car-a", label = "Vortex GT",     topSpeed = 220 },
+    { asset = "sports-car-b", label = "Phantom RS",    topSpeed = 235 },
+    { asset = "muscle-car-a", label = "Thunderbolt V8", topSpeed = 200 },
+    { asset = "supercar-a",   label = "Apex Turismo",  topSpeed = 260 },
+}
+```
+
+You can add or remove vehicles by editing this table. Each vehicle uses a HELIX vehicle asset that you can swap with your own custom models.
+
+## Customizing the Template
+
+### Creating a New Track
+
+1. Open the world in HELIX Studio
+2. Design your road layout using terrain tools, splines, or static meshes
+3. Place Trigger Box actors along the route for checkpoints
+4. Update `RaceConfig.Checkpoints` with the positions of your triggers
+5. Set the first checkpoint at your desired start/finish line
+
+### Adjusting Race Settings
+
+All race parameters live in the config file:
+
+```lua
+RaceConfig.Laps = 5                    -- number of laps
+RaceConfig.MaxPlayers = 16             -- max racers
+RaceConfig.CountdownSeconds = 5        -- pre-race countdown
+RaceConfig.DNFTimeout = 120            -- seconds after winner to end race
+```
+
+## Next Steps
+
+- Customize the track layout in HELIX Studio
+- Add more vehicles to the roster
+- Integrate LIX rewards for race winners via the [economy system](/docs/game-systems/economy)
+- Add spectator mode for players who finish or don't join a race

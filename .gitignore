@@ -1,13 +1,30 @@
-/venv
-/site
-/Lib
-/Scripts
-/.venv
-/.cursor
+# Dependencies
+/node_modules
 
-# wrangler files
-.wrangler
-.dev.vars*
-!.dev.vars.example
-.env*
-!.env.example
+# Production
+/build
+
+# Generated files
+.docusaurus
+.cache-loader
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docusaurus
+/node_modules
+/.docusaurus
+/build
+/.cache-loader
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store

@@ -1,0 +1,31 @@
+---
+title: Inventory
+sidebar_position: 4
+---
+
+# Inventory
+
+The inventory system in HELIX lets you manage items, equipment slots, and storage for each player. Whether you're building an RPG with loot drops or a survival game with resource gathering, the `HInventory` class provides the foundation.
+
+:::caution Under Construction
+The `HInventory` API is currently under active development. The functions and interface may change as the system is finalized. Check the API reference for the latest available methods.
+:::
+
+## Building Custom Inventories
+
+While the `HInventory` class is being finalized, many creators build inventory systems using the [Database](./database.mdx) system to store item data and the event system to handle interactions. This approach gives you full control over item definitions, stacking, equipment slots, and persistence.
+
+A typical custom inventory setup includes:
+
+- **A database table** for storing player inventories as serialized data
+- **Server-side events** for adding, removing, and moving items
+- **A [WebUI](/api/classes/webui) overlay** for displaying the inventory to the player
+- **Item definitions** stored in a Lua or JSON configuration file
+
+## Persistent Inventory
+
+Player inventories don't survive a server restart on their own. To keep items between sessions, save the inventory to a database when it changes and reload it when the player joins. See the [Database](./database.mdx) page for the full setup.
+
+:::tip
+Design your item IDs with a clear naming convention early on -- something like `category::ItemName` keeps things organized as your item list grows.
+:::

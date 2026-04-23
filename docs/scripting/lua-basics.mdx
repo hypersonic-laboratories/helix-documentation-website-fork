@@ -1,0 +1,233 @@
+---
+title: "Lua Basics"
+sidebar_position: 3
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Lua Basics
+
+HELIX uses [UnLua](https://github.com/Tencent/UnLua), Tencent's plugin that binds Lua to Unreal Engine. Lua scripts can override Blueprint functions, access the full engine API, and hot-reload on the fly.
+
+## Setting Up a Lua Package
+
+HELIX Lua scripts live inside Package folders under `Workspace/scripts/`. Each package has its own directory with a `package.json` that declares which scripts run on the client, server, or both:
+
+```
+Workspace/
+└── scripts/
+    ├── MyPackage/
+    │   ├── client.lua
+    │   ├── server.lua
+    │   └── package.json
+    └── config.json
+```
+
+The `config.json` in `Workspace/scripts/` lists which packages to load:
+
+```json
+{
+  "packages": ["MyPackage"]
+}
+```
+
+Each package's `package.json` declares its scripts:
+
+```json
+{
+  "client": ["client.lua"],
+  "server": ["server.lua"],
+  "shared": ["shared/utils.lua"]
+}
+```
+
+Wildcard patterns like `server/*.lua` are supported to include all Lua files in a directory.
+
+## UnLua: Binding Lua to Blueprints
+
+For Blueprint-bound Lua (overriding Blueprint functions), HELIX uses UnLua. Set the **Lua Module** property in your Blueprint (Class Settings > UnLua) to the module path. Any function in the Lua file that matches a Blueprint function name will override it.
+
+## Lua Syntax Primer
+
+If you're coming from JavaScript or C#, here's what's different:
+
+```lua
+-- Variables (local is important -- without it, they're global)
+local health = 100
+local name = "Player"
+local isAlive = true
+
+-- Tables are Lua's only data structure (arrays + dictionaries)
+local inventory = { "sword", "shield", "potion" }
+local stats = { hp = 100, mp = 50, level = 1 }
+
+-- Functions
+local function calculateDamage(base, multiplier)
+    return base * multiplier
+end
+
+-- Control flow (note: no curly braces, uses 'then' and 'end')
+if health <= 0 then
+    isAlive = false
+elseif health < 25 then
+    print("Low health!")
+end
+
+-- Loops
+for i = 1, 10 do
+    print(i)
+end
+
+for key, value in pairs(stats) do
+    print(key, value)
+end
+```
+
+Key differences from other languages: arrays start at index **1**, there's no `+=` operator (use `x = x + 1`), and `~=` is "not equal" instead of `!=`.
+
+## Accessing UE APIs
+
+UnLua exposes engine classes through the `UE` global table:
+
+```lua
+-- Load a class (always include the _C suffix for Blueprint classes)
+local CharacterClass = LoadClass("/Game/Blueprints/MyCharacter.MyCharacter_C")
+
+-- Spawn an actor using the HWorld global
+local spawn_transform = Transform()
+spawn_transform.Translation = Vector(100, 200, 300)
+spawn_transform.Rotation = Rotator(0, 90, 0):ToQuat()
+spawn_transform.Scale3D = Vector(1, 1, 1)
+
+local actor = HWorld:SpawnActor(
+    CharacterClass,
+    spawn_transform,
+    ESpawnActorCollisionHandlingMethod.AlwaysSpawn
+)
+
+-- Get components
+local mesh = self:GetComponentByClass(UE.UStaticMeshComponent)
+
+-- Math
+local location = Vector(100, 200, 300)
+local rotation = Rotator(0, 90, 0)
+```
+
+## Overriding Blueprint Functions
+
+This is UnLua's superpower. Name a Lua function the same as a Blueprint function and it takes over:
+
+```lua
+-- If your Blueprint has a function called "ReceiveBeginPlay"
+function M:ReceiveBeginPlay()
+    print("Hello from Lua!")
+    -- Call the parent Blueprint implementation
+    self.Overridden.ReceiveBeginPlay(self)
+end
+
+-- Override Tick
+function M:ReceiveTick(DeltaSeconds)
+    local location = self:K2_GetActorLocation()
+    print("Actor at:", location.X, location.Y, location.Z)
+end
+
+-- Override custom Blueprint functions too
+function M:OnPlayerInteract(Player)
+    print("Player interacted:", Player:GetName())
+end
+```
+
+The `M` table is your module's main table -- return it at the end of your file.
+
+## Module Structure
+
+Every Lua file follows this pattern:
+
+```lua
+local M = UnLua.Class()
+
+function M:Initialize(Initializer)
+    -- Called when the actor is created
+    print("Initialized!")
+end
+
+function M:ReceiveBeginPlay()
+    self.Health = 100
+    self.Inventory = {}
+end
+
+function M:ReceiveEndPlay()
+    print("Actor destroyed")
+end
+
+return M
+```
+
+## Using Require
+
+Split your code into modules with `require`:
+
+```lua
+-- Utils.lua
+local Utils = {}
+
+function Utils.FormatTime(seconds)
+    local mins = math.floor(seconds / 60)
+    local secs = seconds % 60
+    return string.format("%02d:%02d", mins, secs)
+end
+
+return Utils
+```
+
+```lua
+-- MyScript.lua
+local M = UnLua.Class()
+local Utils = require("MyPackage.Scripts.Utils")
+
+function M:ReceiveBeginPlay()
+    print(Utils.FormatTime(125))  -- "02:05"
+end
+
+return M
+```
+
+## Common Patterns
+
+### Timers
+
+```lua
+-- One-shot delay (2 seconds = 2000 ms)
+Timer.SetTimeout(function()
+    print("Timer fired!")
+end, 2000)
+
+-- Repeating interval (every 5 seconds)
+local intervalId = Timer.SetInterval(function()
+    print("Interval tick!")
+end, 5000)
+
+-- Stop the interval
+Timer.ClearInterval(intervalId)
+```
+
+### Binding Input
+
+```lua
+-- Using HELIX's Input class for simple key binding
+Input.BindKey('SpaceBar', function()
+    print("Jump pressed!")
+end, 'Pressed')
+
+Input.BindKey('E', function()
+    print("Interact pressed!")
+end, 'Pressed')
+```
+
+## Tips
+
+- Always use `local` for variables -- global variables leak across scripts and cause hard-to-find bugs.
+- Use `self.Overridden.FunctionName(self)` to call the original Blueprint implementation when overriding.
+- Check the Output Log in HELIX Studio for `print()` output.
+- Hot-reload your Lua scripts with the console command `UnLua.HotReload`.

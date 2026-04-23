@@ -1,0 +1,228 @@
+---
+title: "Coming from FiveM"
+sidebar_position: 1
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Coming from FiveM
+
+Welcome, FiveM developer! If you've been building servers, scripts, or full RP frameworks on FiveM, you'll feel right at home on HELIX. This guide walks you through every major difference so you can hit the ground running.
+
+## Why Switch?
+
+| | FiveM | HELIX |
+|---|---|---|
+| **Engine** | Modified RAGE (GTA V) | Unreal Engine 5 |
+| **Graphics** | Limited to GTA V visuals | Nanite, Lumen, full UE5 pipeline |
+| **Map Creation** | YMAP / CodeWalker | HELIX Studio (full UE5 editor) |
+| **Scripting** | Lua, C#, JavaScript | Lua, Blueprint, JavaScript |
+| **Monetization** | Tebex / custom | Built-in LIX economy |
+| **Hosting** | txAdmin / self-host | Instant Hosting (one-click) or self-host |
+| **Anti-cheat** | Third-party / custom | Built-in server-authoritative |
+
+HELIX gives you a purpose-built multiplayer sandbox on a modern engine without the legal gray areas of modding a commercial game.
+
+## Resources vs Packages
+
+In FiveM, your code lives in **resources** with a `fxmanifest.lua` at the root. In HELIX, the equivalent is a **package** defined by a `package.json` file.
+
+| FiveM | HELIX |
+|---|---|
+| `fxmanifest.lua` | `package.json` |
+| `server.cfg` | `Config.json` |
+| `resources/` folder | `packages/` folder |
+| `ensure my-resource` | Packages auto-load or toggle in Config |
+
+Here's what a typical `package.json` looks like compared to `fxmanifest.lua`:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Blueprint packages are configured in HELIX Studio"
+  nodes={[
+    { id:'note', title:'Create Package in Content Browser', style:'function', x:30, y:30, pins:[
+      {id:'info',label:'No manifest needed',type:'string',side:'input',value:'"Use Content Browser > New Package"'}
+    ]}
+  ]}
+  wires={[]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- FiveM fxmanifest.lua (old way)
+fx_version 'cerulean'
+game 'gta5'
+client_scripts { 'client.lua' }
+server_scripts { 'server.lua' }
+
+-- HELIX package.json (new way)
+-- {
+--   "name": "my-package",
+--   "type": "script",
+--   "version": "1.0.0",
+--   "client_scripts": ["client.lua"],
+--   "server_scripts": ["server.lua"]
+-- }
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// HELIX package.json
+// {
+//   "name": "my-package",
+//   "type": "script",
+//   "version": "1.0.0",
+//   "client_scripts": ["client.js"],
+//   "server_scripts": ["server.js"]
+// }
+```
+
+</TabItem>
+</Tabs>
+
+## API Comparison Table
+
+This is the big one. Here's how common FiveM natives map to HELIX APIs:
+
+| FiveM Native / Function | HELIX Equivalent | Notes |
+|---|---|---|
+| `PlayerPedID()` | `Client.GetLocalPlayer():GetControlledCharacter()` | Returns the local character pawn |
+| `SetEntityCoords(ped, x, y, z)` | `ped:SetLocation(Vector(x, y, z))` | Uses `Vector()` instead of `vector3()` |
+| `TaskPlayAnim(ped, dict, name, ...)` | `ped:PlayAnimation(path)` | No anim dict loading needed |
+| `FreezeEntityPosition(ped, true)` | `ped:SetInputEnabled(false)` | Disables player input |
+| `DeleteEntity(entity)` | `actor:Destroy()` | Works on any Actor |
+| `DropPlayer(src, reason)` | `player:Kick(reason)` | Server-side only |
+| `SetNuiFocus(true, true)` | [`Input.SetInputEnabled(false)`](/api/classes/input) | Toggles game input for UI |
+| `SendNUIMessage(data)` | [`WebUI:CallFunction(name, args)`](/api/classes/webui) | Direct function calls |
+| `SetTimeout(ms, cb)` | [`Timer.SetTimeout(cb, ms)`](/api/classes/timer) | Note: callback is the first argument |
+| `vector3(x, y, z)` | `Vector(x, y, z)` | HELIX uses `Vector` globally |
+
+## Networking: Events
+
+FiveM uses `TriggerServerEvent` / `TriggerClientEvent` with string-based event names. HELIX Lua uses the same global function names with a similar pattern via the [Events](/api/classes/events) API. HELIX JavaScript uses an endpoint/call model instead:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Client-server events in Blueprint"
+  nodes={[
+    { id:'evt', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'call', title:'Call Remote Event', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'name',label:'Event Name',type:'string',side:'input',value:'"myEvent"'},
+      {id:'data',label:'Data',type:'wildcard',side:'input'}
+    ]},
+    { id:'sub', title:'Subscribe to Remote Event', style:'event', x:300, y:180, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'name',label:'Event Name',type:'string',side:'input',value:'"myEvent"'},
+      {id:'data',label:'Data',type:'wildcard',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'evt',pin:'eo'},to:{node:'call',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- FiveM (client -> server)
+TriggerServerEvent('myEvent', data)
+
+-- HELIX (client -> server) -- same function name!
+TriggerServerEvent('myEvent', data)
+
+-- FiveM (server -> client)
+TriggerClientEvent('myEvent', source, data)
+
+-- HELIX (server -> client) -- controller instead of source
+TriggerClientEvent(controller, 'myEvent', data)
+
+-- FiveM (subscribe on server)
+RegisterNetEvent('myEvent', function(data) end)
+
+-- HELIX (subscribe on server) -- controller passed as first arg
+RegisterServerEvent('myEvent', function(controller, data) end)
+
+-- HELIX (subscribe on client)
+RegisterClientEvent('myEvent', function(data) end)
+
+-- HELIX (broadcast to all clients from server)
+BroadcastEvent('myEvent', data)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// HELIX JS uses an endpoint/call model instead of events
+
+// Server: register an endpoint
+Helix.server(async () => {
+    Helix.endpoint('myModule:getData', async (helixId) => {
+        const data = await loadData(helixId);
+        return data;
+    });
+});
+
+// Client: call the endpoint
+const id = Helix.Player.helixId();
+const result = await Helix.call('myModule:getData', id.toString());
+```
+
+</TabItem>
+</Tabs>
+
+One key difference: HELIX events are **server-authoritative by default**. The server validates everything, which means way less anti-cheat headache for you.
+
+## NUI vs WebUI
+
+FiveM's NUI system lets you load HTML/CSS/JS interfaces in-game. HELIX has [**WebUI**](/api/classes/webui), which does the same thing but with a dedicated event system instead of message passing.
+
+| FiveM NUI | HELIX WebUI |
+|---|---|
+| `SendNUIMessage({ type: 'show' })` | `WebUI:CallFunction('show', data)` |
+| `RegisterNUICallback('action', cb)` | `WebUI:Subscribe('action', cb)` |
+| `SetNuiFocus(true, true)` | `Input.SetInputEnabled(false)` |
+| Load via `ui_page 'index.html'` in manifest | Load via `WebUI('id', 'path/to/index.html', zOrder)` |
+
+No more fiddling with `SetNuiFocus` cursor states -- [`Input.SetInputEnabled`](/api/classes/input) and `Input.SetMouseEnabled` handle input toggling cleanly.
+
+## Server Setup
+
+| FiveM | HELIX |
+|---|---|
+| Download artifacts + cfx-server-data | Download HELIX Server or use Instant Hosting |
+| Configure `server.cfg` | Configure `Config.json` |
+| Manage with txAdmin | Built-in web dashboard or CLI |
+| Port forward 30120 | Port forward 7777 (default) |
+| `ensure resource-name` | Packages load automatically from `packages/` |
+
+**Instant Hosting** is HELIX's one-click server deployment. No VPS setup, no txAdmin configuration -- pick your region, upload your packages, and you're live. You can always switch to self-hosting later.
+
+## Quick Start Checklist
+
+1. **Install HELIX** from the official site and launch HELIX Studio
+2. **Create a new package** -- this replaces your FiveM resource folder
+3. **Port your Lua scripts** using the API comparison table above
+4. **Replace NUI with WebUI** -- your HTML/CSS stays the same, update the JS bridge
+5. **Update your events** -- HELIX Lua uses the same [`TriggerServerEvent`](/api/classes/events)/`TriggerClientEvent` names, but `RegisterServerEvent`/`RegisterClientEvent` instead of `RegisterNetEvent`
+6. **Test locally** with the built-in local server
+7. **Deploy** via Instant Hosting or your own server
+
+:::tip
+If you're running QBCore on FiveM, check out the [QBCore on HELIX](/docs/qbcore/overview) section -- it's been ported and ready to use.
+:::

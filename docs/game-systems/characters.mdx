@@ -1,0 +1,245 @@
+---
+title: Characters
+sidebar_position: 1
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Characters
+
+Characters are the heart of any HELIX experience. Whether you're spawning a player-controlled avatar, a wandering NPC shopkeeper, or a cinematic MetaHuman, the [`HCharacter`](/api/classes/character) class gives you full control over appearance, movement, and behavior.
+
+## Spawning a Character
+
+Every player who joins your world needs a character to inhabit. You can spawn one at any location and rotation you like.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Spawn a character and possess it"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'spawn', title:'Spawn HCharacter', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'loc',label:'Location',type:'vector',side:'input',value:'(0, 0, 100)'},
+      {id:'rot',label:'Rotation',type:'rotator',side:'input',value:'(0, 0, 0)'},
+      {id:'player',label:'Player',type:'object',side:'input'},
+      {id:'ret',label:'Character',type:'object',side:'output'}
+    ]},
+    { id:'getpawn', title:'Get Pawn', style:'pure', x:550, y:140, pins:[
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'ret',label:'Pawn',type:'object',side:'output'}
+    ]},
+    { id:'possess', title:'Possess', style:'function', x:600, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'pawn',label:'In Pawn',type:'object',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'spawn',pin:'ei'}},
+    {from:{node:'spawn',pin:'eo'},to:{node:'possess',pin:'ei'}},
+    {from:{node:'spawn',pin:'ret'},to:{node:'getpawn',pin:'target'}},
+    {from:{node:'getpawn',pin:'ret'},to:{node:'possess',pin:'pawn'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Spawn a character at the world origin and possess it
+local my_char = HCharacter(Vector(0, 0, 100), Quat(0, 0, 0, 1), player)
+player:Possess(my_char:GetPawn())
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Spawn a character at the world origin and possess it
+const myChar = new HCharacter(new Vector(0, 0, 100), new Quat(0, 0, 0, 1), player);
+player.Possess(myChar.GetPawn());
+```
+
+</TabItem>
+</Tabs>
+
+## Animations
+
+Characters support a wide range of animations out of the box. Use `PlayAnimation` to trigger any animation asset -- from idle gestures to full combat sequences.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Play an animation montage"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'play', title:'Play Animation', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'montage',label:'Anim Montage',type:'object',side:'input',value:'WaveMontage'},
+      {id:'rate',label:'Play Rate',type:'float',side:'input',value:'1.0'},
+      {id:'slot',label:'Start Section',type:'name',side:'input',value:'"DefaultSlot"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'play',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Play a wave animation montage
+my_char:PlayAnimation(WaveMontage, 1.0, "DefaultSlot")
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Play a wave animation montage
+myChar.PlayAnimation(WaveMontage, 1.0, "DefaultSlot");
+```
+
+</TabItem>
+</Tabs>
+
+`PlayAnimation` plays a montage animation on the character. You can specify a play rate and a start section name. Use `StopAnimation` to stop a playing montage with an optional blend-out time.
+
+## Movement
+
+Characters come with built-in movement and physics. You can toggle ragdoll mode, enable or disable player input, and attach objects to skeleton sockets.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Toggle ragdoll and disable input"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'ragdoll', title:'Set Ragdoll Mode', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'enable',label:'Enable',type:'bool',side:'input',value:'true'}
+    ]},
+    { id:'input', title:'Set Input Enabled', style:'function', x:600, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'enabled',label:'Enabled',type:'bool',side:'input',value:'false'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'ragdoll',pin:'ei'}},
+    {from:{node:'ragdoll',pin:'eo'},to:{node:'input',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Toggle ragdoll physics
+my_char:SetRagdollMode(true)
+
+-- Disable player input
+my_char:SetInputEnabled(false)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Toggle ragdoll physics
+myChar.SetRagdollMode(true);
+
+// Disable player input
+myChar.SetInputEnabled(false);
+```
+
+</TabItem>
+</Tabs>
+
+## Appearance & MetaHumans
+
+HELIX supports full character customization, including Epic's MetaHuman system. You can swap skeletal meshes, apply materials, and adjust morph targets to create unique looks.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Change mesh and attach a static mesh to a socket"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'setmesh', title:'Set Mesh', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'mesh',label:'Mesh',type:'object',side:'input',value:'MyCustomMesh'}
+    ]},
+    { id:'attach', title:'Add Static Mesh Attached', style:'function', x:600, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'id',label:'ID',type:'string',side:'input',value:'"backpack"'},
+      {id:'mesh',label:'Static Mesh',type:'object',side:'input',value:'BackpackMesh'},
+      {id:'socket',label:'Socket',type:'name',side:'input',value:'"spine_03"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'setmesh',pin:'ei'}},
+    {from:{node:'setmesh',pin:'eo'},to:{node:'attach',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Change the character mesh
+my_char:SetMesh(UE.UObject.Load("/Game/MyMeshes/MyCustomMesh.MyCustomMesh"))
+
+-- Attach a static mesh to a socket
+my_char:AddStaticMeshAttached("backpack", BackpackMesh, "spine_03")
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Change the character mesh
+myChar.SetMesh(UE.UObject.Load("/Game/MyMeshes/MyCustomMesh.MyCustomMesh"));
+
+// Attach a static mesh to a socket
+myChar.AddStaticMeshAttached("backpack", BackpackMesh, "spine_03");
+```
+
+</TabItem>
+</Tabs>
+
+## NPCs
+
+NPCs are characters that aren't possessed by a player. You can give them AI behavior by setting waypoints, using behavior trees, or scripting their actions directly. Since they share the same [`Character`](/api/classes/character) class, everything above -- animations, movement, appearance -- works for NPCs too.
+
+:::tip
+For more complex NPC behavior, look into HELIX's built-in AI navigation system which provides pathfinding, obstacle avoidance, and patrol routes out of the box.
+:::

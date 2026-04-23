@@ -1,0 +1,49 @@
+---
+title: "World Management"
+sidebar_position: 4
+---
+
+# World Management
+
+Once your world is published and players are jumping in, you'll need to keep it running smoothly. HELIX gives you tools for updating, monitoring, and maintaining your worlds through the Hub.
+
+## Updating Your World
+
+When you're ready to push changes:
+
+1. Make your updates locally and test them.
+2. Bump your world's version number in the configuration.
+3. Publish the update through the HELIX Hub.
+4. Running servers can pick up the new version automatically, or you can trigger a manual restart.
+
+Players won't need to download anything manually -- the HELIX client handles updates seamlessly when they connect.
+
+## Versioning
+
+Worlds follow semantic versioning, the same as Vault packages. Keep a changelog so your players know what's new. Good changelogs build trust and keep your community engaged -- even a few bullet points per update go a long way.
+
+Rolling back is supported too. If an update introduces a bug, you can revert to a previous version from the Hub while you work on a fix.
+
+## Analytics
+
+The HELIX Hub provides a dashboard with key metrics:
+
+- **Concurrent players** -- How many people are in your world right now.
+- **Unique visitors** -- Total individual players over a time period.
+- **Session length** -- How long players stick around on average.
+- **Retention** -- What percentage of players come back after their first visit.
+- **Revenue** -- LIX earned, broken down by source (in-world purchases, game passes, etc.).
+
+Use these numbers to understand what's working and what needs attention. A drop in session length might mean your latest update needs tweaking. A spike in new visitors after a content drop tells you to keep that momentum going.
+
+## Player Feedback
+
+HELIX includes built-in feedback tools. Players can rate your world and leave comments. Monitor this feedback regularly -- it's a direct line to what your community wants.
+
+You can also set up a feedback channel within your world using in-game UI, giving players a way to report bugs or suggest features without leaving the experience.
+
+## Managing Dependencies
+
+If your world depends on Vault packages, keep an eye on updates from those package authors. The Hub will notify you when a dependency has a new version available. Test dependency updates in a local environment before deploying them to your live world -- a breaking change in a package you depend on can take your world down.
+
+Pin critical dependencies to specific versions in production, and save experimental updates for your development branch.

@@ -1,0 +1,65 @@
+---
+title: "QBCore Packages"
+sidebar_position: 5
+---
+
+# QBCore Packages
+
+QBCore's strength is its ecosystem. The framework is modular -- you install only the packages you need for your server. Here's a rundown of the most popular QBCore packages available on HELIX.
+
+## Core Packages
+
+These are the essentials that most QBCore servers will want:
+
+| Package | Description |
+|---|---|
+| **qb-core** | The framework itself. Handles player management, shared data, callbacks, and the event system. Required by all other QBCore packages. |
+| **qb-multicharacter** | Multi-character selection screen. Lets each player account own multiple characters. |
+| **qb-spawn** | Spawn selection after choosing a character. Offers last location, default spawn, or custom spawn points. |
+| **qb-clothing** | Character appearance customization. Handles faces, hair, clothing, and accessories. |
+| **qb-inventory** | Full inventory system with weight-based item management, drag-and-drop WebUI, and ground item drops. |
+
+## Job Packages
+
+| Package | Description |
+|---|---|
+| **qb-policejob** | Law enforcement job with arrest, cuff, evidence, and vehicle impound mechanics. |
+| **qb-ambulancejob** | EMS job with player revival, stretcher mechanics, and hospital check-in. |
+| **qb-mechanicjob** | Vehicle repair, tuning, and custom mod shop functionality. |
+| **qb-taxijob** | Taxi service with NPC dispatch, meter system, and fare tracking. |
+| **qb-truckerjob** | Delivery job with route system, cargo types, and payouts. |
+
+## World & Interaction Packages
+
+| Package | Description |
+|---|---|
+| **qb-target** | Interaction system that lets players target entities, zones, and objects to trigger actions (like opening a shop or talking to an NPC). |
+| **qb-menu** | Context menus for in-game interactions. Used by many other packages for option selection. |
+| **qb-input** | Input dialogs for collecting text, numbers, or selections from players. |
+| **qb-doorlock** | Door locking system for buildings, businesses, and restricted areas. Supports job-based and item-based access. |
+
+## Economy & Property Packages
+
+| Package | Description |
+|---|---|
+| **qb-banking** | Bank account management with ATMs, transfers, and transaction history. |
+| **qb-shops** | Configurable NPC shops for selling items to players. |
+| **qb-apartments** | Starter housing system with interior instances. |
+| **qb-houses** | Full housing system with purchasable properties, stashes, and decorating. |
+| **qb-vehicleshop** | Vehicle dealership with test drives, financing, and display lots. |
+| **qb-garages** | Vehicle storage and retrieval from garage locations. |
+
+## Utility Packages
+
+| Package | Description |
+|---|---|
+| **qb-phone** | In-game smartphone with contacts, messages, Twitter, bank app, and more. |
+| **qb-radio** | Voice radio system with frequency-based channels. |
+| **qb-adminmenu** | Server administration panel for managing players, teleporting, and spawning items. |
+| **qb-weathersync** | Synchronized weather and time-of-day across all players. |
+
+## Installing Packages
+
+All QBCore packages are included in the [QBCore repository](https://github.com/hypersonic-laboratories/qbcore-rp). When you install QBCore via the HELIX client REMIX flow or by cloning the GitHub repo, all packages come bundled together.
+
+To enable a package, make sure it's listed in your server's `Config.json` under the `packages` array. Check each package's `config.lua` for customization options.

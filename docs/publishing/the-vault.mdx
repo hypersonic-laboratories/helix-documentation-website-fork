@@ -1,0 +1,53 @@
+---
+title: "Vault"
+sidebar_position: 1
+---
+
+# Vault
+
+Vault is HELIX's package repository and marketplace -- think of it as a combination of npm and an asset store, built right into the platform. It's where you publish, discover, and install packages that power your worlds.
+
+## What's in Vault?
+
+Packages in Vault can include:
+
+- **Game modes** -- Complete gameplay experiences you can drop into any world.
+- **Assets** -- 3D models, textures, materials, sounds, and animations.
+- **Scripts** -- Reusable code modules like inventory systems, chat commands, or admin tools.
+- **Maps** -- Full level designs ready to load.
+- **UI kits** -- Pre-built interface components and themes.
+
+Packages can be free or paid (priced in [LIX](./monetization.mdx)), and creators earn revenue from every sale.
+
+## Publishing a Package
+
+To publish to Vault:
+
+1. **Prepare your package.** Make sure it has the required metadata -- name, version, description, and author.
+2. **Test locally.** Run your package in a local world to verify everything works.
+3. **Publish through HELIX Studio or Creator Hub.** HELIX Studio lets you publish directly from the editor, while Creator Hub provides tools for managing listing details like descriptions, preview images, and tags.
+4. **Submit for review.** Packages go through a review to check for policy compliance before they go live.
+
+Once published, your package gets a page in Vault where other creators can find it, read the docs, and install it.
+
+## Versioning
+
+Every package follows **semantic versioning** (major.minor.patch). When you push an update:
+
+- **Patch** (1.0.0 -> 1.0.1) -- Bug fixes, no breaking changes.
+- **Minor** (1.0.0 -> 1.1.0) -- New features, backwards compatible.
+- **Major** (1.0.0 -> 2.0.0) -- Breaking changes that may require consumers to update their code.
+
+Worlds that depend on your package can pin to a specific version or opt into automatic updates for patches and minor versions.
+
+## Dependencies
+
+Packages can depend on other packages. When someone installs your package, Vault automatically resolves and downloads any dependencies. Circular dependencies aren't allowed, and the resolver will warn you about version conflicts.
+
+You can manage dependencies through HELIX Studio (which shows both local packages and Vault dependencies) or through Creator Hub.
+
+## Discovering Packages
+
+Vault has search, categories, tags, and curated collections to help you find what you need. You can filter by type (scripts, assets, maps), sort by popularity or recent updates, and read community ratings and reviews.
+
+Popular packages get featured on Vault homepage, giving your work visibility across the entire HELIX community.

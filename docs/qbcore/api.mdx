@@ -1,0 +1,193 @@
+---
+title: "QBCore API"
+sidebar_position: 4
+---
+
+# QBCore API
+
+This page covers the core QBCore API -- the functions and tables you'll use most when building on the framework. QBCore is Lua-based, so all examples here are in Lua.
+
+## QBCore.Functions (Server)
+
+These are the primary server-side functions for managing players and data.
+
+### GetPlayer
+
+Retrieve a player object by their server source ID:
+
+```lua
+local Player = QBCore.Functions.GetPlayer(source)
+```
+
+### GetPlayerByCitizenId
+
+Look up a player by their unique citizen ID (useful for offline lookups):
+
+```lua
+local Player = QBCore.Functions.GetPlayerByCitizenId("HLX28491")
+```
+
+### GetPlayers
+
+Get all currently connected players:
+
+```lua
+local players = QBCore.Functions.GetPlayers()
+for _, src in ipairs(players) do
+    local Player = QBCore.Functions.GetPlayer(src)
+    print(Player.PlayerData.charinfo.firstname)
+end
+```
+
+### CreateCallback
+
+Register a server callback that clients can invoke:
+
+```lua
+QBCore.Functions.CreateCallback('mypackage:server:getData', function(source, cb, args)
+    local Player = QBCore.Functions.GetPlayer(source)
+    local result = { name = Player.PlayerData.charinfo.firstname }
+    cb(result)
+end)
+```
+
+### CreateUseableItem
+
+Register an item that triggers a function when used:
+
+```lua
+QBCore.Functions.CreateUseableItem("water_bottle", function(source, item)
+    local Player = QBCore.Functions.GetPlayer(source)
+    Player.Functions.SetMetaData("thirst", math.min(Player.PlayerData.metadata.thirst + 30, 100))
+    Player.Functions.RemoveItem("water_bottle", 1)
+end)
+```
+
+## QBCore.Functions (Client)
+
+Client-side functions for interacting with the server and local player.
+
+### GetPlayerData
+
+Get the local player's cached data (no server round-trip):
+
+```lua
+local PlayerData = QBCore.Functions.GetPlayerData()
+local job = PlayerData.job.name
+local cash = PlayerData.money.cash
+```
+
+### TriggerCallback
+
+Invoke a server callback and receive the result:
+
+```lua
+QBCore.Functions.TriggerCallback('mypackage:server:getData', function(result)
+    print("Name: " .. result.name)
+end, optionalArgs)
+```
+
+### Notify
+
+Show a notification to the local player:
+
+```lua
+QBCore.Functions.Notify("You picked up a health kit!", "success", 5000)
+-- Types: "success", "error", "info", "warning"
+-- Duration in milliseconds
+```
+
+## QBCore.Players
+
+Server-side table that holds all active player objects, keyed by source:
+
+```lua
+-- Loop through all online players
+for src, Player in pairs(QBCore.Players) do
+    print(src, Player.PlayerData.charinfo.firstname)
+end
+```
+
+## Shared Data
+
+QBCore uses shared Lua tables to define items, jobs, vehicles, and gangs. These are accessible on both client and server.
+
+### QBCore.Shared.Items
+
+All registered items in the framework:
+
+```lua
+QBCore.Shared.Items = {
+    water_bottle = {
+        name = "water_bottle",
+        label = "Water Bottle",
+        weight = 200,       -- grams
+        type = "item",
+        image = "water_bottle.png",
+        unique = false,
+        useable = true,
+        shouldClose = true,
+        description = "A refreshing bottle of water"
+    },
+}
+```
+
+### QBCore.Shared.Jobs
+
+All registered jobs (see the [Player Guide](./player-guide#jobs-system) for the full structure).
+
+### QBCore.Shared.Vehicles
+
+Vehicle definitions used by dealerships, garages, and spawning:
+
+```lua
+QBCore.Shared.Vehicles = {
+    sedan_sport = {
+        name = "sedan_sport",
+        label = "Sport Sedan",
+        brand = "Benefactor",
+        type = "automobile",
+        price = 45000,
+        category = "sedans",
+    },
+}
+```
+
+### QBCore.Shared.Gangs
+
+Gang definitions with grades, similar to jobs:
+
+```lua
+QBCore.Shared.Gangs = {
+    ballas = {
+        label = "Ballas",
+        grades = {
+            [0] = { name = "recruit" },
+            [1] = { name = "enforcer" },
+            [2] = { name = "shotcaller" },
+            [3] = { name = "boss" },
+        },
+    },
+}
+```
+
+## Events
+
+QBCore fires several [Events](/api/classes/events) you can listen to for hooking into the framework lifecycle:
+
+```lua
+-- Player loaded (server)
+RegisterServerEvent('QBCore:Server:PlayerLoaded', function(controller, Player)
+    print(Player.PlayerData.charinfo.firstname .. " has loaded in")
+end)
+
+-- Player job updated (client)
+RegisterClientEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
+    print("New job: " .. JobInfo.name)
+end)
+
+-- Player money updated (client)
+RegisterClientEvent('QBCore:Client:OnMoneyChange', function(moneyType, amount, operation)
+    print(moneyType .. ": " .. operation .. " $" .. amount)
+end)
+```

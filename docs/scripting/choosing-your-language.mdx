@@ -1,0 +1,56 @@
+---
+title: "Choosing Your Language"
+sidebar_position: 1
+---
+
+# Choosing Your Language
+
+HELIX supports three scripting languages: **Blueprints**, **Lua**, and **JavaScript**. Each one is a first-class citizen, but they have different strengths. Here's an honest breakdown to help you pick.
+
+## Quick Comparison
+
+| | Blueprints | Lua | JavaScript |
+|---|---|---|---|
+| **Performance** | Best (native compiled) | Great | Good |
+| **Learning curve** | Easiest (visual) | Moderate | Moderate |
+| **Engine integration** | Full, direct | Via `UE` global table | Via UE bindings |
+| **Ecosystem** | UE Marketplace | Lightweight, fast iteration | npm, TypeScript support |
+| **Best for** | Everything, especially gameplay | Quick prototyping, FiveM migrants | Web devs, complex data handling |
+| **Debugging** | HELIX Studio visual debugger | Print + log based | Chrome DevTools, breakpoints |
+| **Hot reload** | Partial (some node changes) | Yes | Yes |
+
+## Blueprints (Recommended)
+
+Blueprints are HELIX's primary scripting language. They're visual, compiled natively by Unreal Engine, and give you the deepest integration with the editor. Every HELIX API is designed Blueprints-first.
+
+If you're new to game development, start here. The visual graph makes it easier to understand program flow, and you'll never fight a syntax error. Performance is the best of all three options since Blueprint bytecode runs directly in the engine.
+
+**Choose Blueprints if:** you want the best performance, fullest engine integration, or you're new to programming.
+
+## Lua (via UnLua)
+
+HELIX uses [UnLua](https://github.com/Tencent/UnLua), Tencent's Unreal Engine Lua plugin. Lua scripts can override Blueprint functions, access the engine through the `UE` global table, and hot-reload without restarting the editor.
+
+Lua is lightweight, fast to iterate with, and familiar if you're coming from FiveM, Garry's Mod, or Roblox. The syntax is minimal and scripts stay short.
+
+**Choose Lua if:** you're migrating from FiveM/GMod, you want rapid prototyping, or you prefer text-based scripting with minimal boilerplate.
+
+## JavaScript (via PuerTS)
+
+HELIX uses [PuerTS](https://github.com/nicedoc/nicedoc.io), Tencent's V8-based JavaScript runtime for Unreal Engine. You get full access to the npm ecosystem, async/await, and optional TypeScript support.
+
+If you're a web developer, this is your comfort zone. You can pull in npm packages for things like data parsing, HTTP requests, or utility libraries. TypeScript adds type safety that can catch bugs before they hit the engine.
+
+**Choose JavaScript if:** you're a web developer, you need npm packages, or you want TypeScript's type checking.
+
+## Can I Mix Languages?
+
+Yes. HELIX's event system works across all three languages. You can fire an event from Lua and handle it in Blueprints, or call into JavaScript from a Blueprint custom event. Each Package can use whichever language makes sense for that module.
+
+That said, most teams stick to one primary language for consistency. Blueprints + one scripting language (Lua or JS) is a common combo: Blueprints for gameplay, scripting for server logic.
+
+## Our Recommendation
+
+Start with **Blueprints**. They're the most documented, best supported, and highest performance option. If you hit a case where text-based scripting feels more natural (complex string parsing, server-side logic, API integrations), layer in Lua or JavaScript as needed.
+
+There's no wrong choice here -- pick what keeps you productive and having fun.

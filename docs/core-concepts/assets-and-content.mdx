@@ -1,0 +1,78 @@
+---
+title: "Assets & Content"
+sidebar_position: 8
+---
+
+# Assets & Content
+
+Assets are the raw materials of your game — the 3D models, textures, sounds, and animations that bring your world to life. Everything you see, hear, and interact with in a HELIX world is built from assets.
+
+## Asset Types
+
+### Meshes (3D Models)
+
+The geometry that gives objects their shape. A tree trunk, a weapon, a building — all meshes. They come in two flavors:
+
+- **Static Meshes** — rigid, non-animated objects (walls, rocks, furniture, props)
+- **Skeletal Meshes** — meshes with an internal bone structure for animation (characters, creatures, anything that bends and moves organically)
+
+### Materials
+
+Materials define how a surface *looks* — is it shiny metal, rough stone, glowing neon, translucent glass? A material is a node-based shader graph (yes, more visual scripting!) that combines textures, colors, and math to produce a surface appearance. One material can be shared across many meshes.
+
+### Textures
+
+The 2D images that feed into materials. A brick wall material might use a color texture (the brick pattern), a normal map (surface bumps that catch light), and a roughness map (where it's smooth vs rough). Common formats: `.png`, `.tga`, `.exr`.
+
+### Sounds
+
+Audio files for music, sound effects, ambient noise, and dialogue. HELIX supports `.wav` and `.ogg` formats. Sounds can be spatialized in 3D so they get louder as you approach and quieter as you walk away. Use **Sound Cues** to layer, randomize, and modulate sounds without writing any logic.
+
+### Animations
+
+Sequences of poses applied to Skeletal Meshes. Walk cycles, attack swings, idle fidgets — animations make characters feel alive. They get blended together in **Animation Blueprints** for smooth, responsive character movement.
+
+## The Content Browser
+
+The **Content Browser** in HELIX Studio is your file manager for assets. From here you can:
+
+- Browse and organize assets into folders
+- Search by name, type, or tag
+- Drag assets directly into the viewport to place them in the world
+- Right-click to create new assets (Materials, Blueprints, Input Actions, etc.)
+- Preview meshes, materials, and sounds without leaving the editor
+
+Keep your content organized from the start. A folder structure like `/Content/MyProject/Meshes/`, `/Content/MyProject/Materials/`, `/Content/MyProject/Audio/` will save you headaches as your project grows.
+
+## Importing Assets
+
+To bring external files into your project:
+
+1. Click **Import** in the Content Browser (or drag files in from your OS file manager)
+2. Configure import settings (scale, texture compression, mesh options)
+3. The engine converts your file into a `.uasset` — the internal format UE5 works with
+
+Supported formats: FBX and glTF for meshes, PNG/TGA/EXR for textures, WAV/OGG for audio.
+
+## Referencing Custom Assets in Scripts
+
+Any asset inside an imported or mounted package can be loaded at runtime in Lua:
+
+```lua
+-- Load an asset by its game path
+local MyAsset = UE.UObject.Load('/Game/YourPackageName/PathToYourAsset/YourAssetName.YourAssetName')
+```
+
+You can get the full path of an asset by right-clicking it in Build Mode and selecting **Copy Object Path**.
+
+## Nanite — High-Poly Without the Pain
+
+Normally, high-polygon meshes destroy performance. **Nanite** is UE5's virtualized geometry system that lets you use film-quality assets (millions of polygons) without manual LOD (Level of Detail) setup. Drop in a photogrammetry scan with 10 million triangles, and Nanite figures out how many to render based on screen size and distance. Enable it per-mesh in the import settings.
+
+## Lumen — Dynamic Global Illumination
+
+**Lumen** is UE5's lighting system that calculates realistic light bouncing in real-time. Move a light, and the entire scene reacts — no baking lightmaps required. Sunlight pouring through a window and bouncing warm tones onto the opposite wall? Lumen handles that automatically. Colored surfaces tint nearby objects, and reflections update as you rearrange the scene.
+
+:::tip
+Keep your Content Browser organized from day one. Use folders like `/Characters`, `/Environment`, `/Audio`, `/UI`. Future-you will appreciate not having to dig through a pile of 500 unnamed assets.
+:::

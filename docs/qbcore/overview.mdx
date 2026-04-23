@@ -1,0 +1,50 @@
+---
+title: "QBCore Overview"
+sidebar_position: 1
+---
+
+# QBCore Overview
+
+**QBCore** is a full-featured roleplay framework that has been ported from FiveM to HELIX. If you've built RP servers on FiveM using QBCore, you already know the system -- and now it runs on Unreal Engine 5.
+
+## What is QBCore?
+
+QBCore is a modular framework that provides the core systems every roleplay server needs. Instead of building player management, inventory, jobs, and economy from scratch, QBCore gives you a battle-tested foundation to build on top of.
+
+On HELIX, QBCore is written in **Lua** and uses the same API patterns that FiveM QBCore developers are familiar with, adapted to work with HELIX's server-authoritative architecture.
+
+## What's Included
+
+QBCore on HELIX provides:
+
+- **Player Management** -- Character creation, multi-character support, player data persistence
+- **Jobs System** -- Define jobs with grades, permissions, and on/off-duty states
+- **Economy** -- Cash, bank accounts, and a full transaction system
+- **Inventory** -- Item management with weight-based or slot-based inventory
+- **Shared Data** -- Centralized tables for vehicles, jobs, items, and gangs
+- **Admin Tools** -- Built-in commands for server administration
+
+## Differences from FiveM QBCore
+
+While the API stays as close to FiveM QBCore as possible, there are some key differences:
+
+| FiveM QBCore | HELIX QBCore |
+|---|---|
+| Runs on RAGE engine | Runs on Unreal Engine 5 |
+| Uses FiveM natives for entities | Uses HELIX Actor API |
+| ox_lib / PolyZone dependencies | HELIX built-in equivalents |
+| NUI-based UI | WebUI-based UI |
+| `fxmanifest.lua` per resource | `package.json` per package |
+
+The Lua-side API (`QBCore.Functions`, `QBCore.Players`, shared data tables) remains consistent. Your server-side logic ports over with minimal changes -- the biggest adjustments are on the client side where FiveM natives need to be swapped for HELIX APIs.
+
+## Why Use QBCore?
+
+- **Proven foundation** -- QBCore powers thousands of RP servers on FiveM. That experience and stability carries over.
+- **Large ecosystem** -- Dozens of compatible packages (inventory, housing, jobs, and more) are available.
+- **Familiar API** -- If your team knows QBCore, they can start building on HELIX right away.
+- **Active community** -- Get help from other QBCore developers who have made the switch.
+
+:::tip
+New to QBCore entirely? No worries. Head to the [Installation guide](./installation) to get set up, then check out the [Player Guide](./player-guide) to learn the core systems.
+:::

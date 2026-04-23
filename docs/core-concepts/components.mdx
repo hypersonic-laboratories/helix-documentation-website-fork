@@ -1,0 +1,114 @@
+---
+title: Components
+sidebar_position: 3
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Components
+
+An Actor by itself is an empty shell — it exists in the world but doesn't *do* anything. **Components** are the LEGO pieces you snap onto an Actor to give it shape, behavior, and personality.
+
+Want your Actor to have a 3D model? Attach a **StaticMeshComponent**. Need it to play sounds? Add an **AudioComponent**. Want it to collide with things? Slap on a **CollisionComponent**.
+
+## Common Component Types
+
+| Component | What it does |
+|-----------|-------------|
+| **StaticMeshComponent** | Gives the Actor a visible 3D model |
+| **SkeletalMeshComponent** | A 3D model with a skeleton for animation |
+| **BoxCollisionComponent** | Simple box-shaped collision detection |
+| **SphereCollisionComponent** | Spherical collision detection |
+| **AudioComponent** | Plays sounds in 3D space |
+| **PointLightComponent** | Emits light from a single point |
+| **CameraComponent** | Adds a camera viewpoint |
+| **CharacterMovementComponent** | Handles walking, jumping, falling, swimming |
+
+## Adding Components
+
+In HELIX Studio, you can add components visually in the Blueprint editor's **Components** panel — hit **Add** and pick what you need. You can also add them at runtime through code:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Add Static Mesh Component"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'add', title:'Add Static Mesh Component', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'manual',label:'Manual Attachment',type:'bool',side:'input',value:'false'},
+      {id:'transform',label:'Relative Transform',type:'transform',side:'input'},
+      {id:'ret',label:'Return Value',type:'object',side:'output'}
+    ]},
+    { id:'setmesh', title:'Set Static Mesh', style:'function', x:600, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'mesh',label:'New Mesh',type:'object',side:'input',value:'My Mesh Asset'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'add',pin:'ei'}},
+    {from:{node:'add',pin:'eo'},to:{node:'setmesh',pin:'ei'}},
+    {from:{node:'add',pin:'ret'},to:{node:'setmesh',pin:'target'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Add a static mesh component to an actor
+function MyActor:Initialize(Initializer)
+    local mesh_comp = Initializer:CreateDefaultSubobject(
+        "MyMesh", UE.UStaticMeshComponent
+    )
+    self.RootComponent = mesh_comp
+end
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Add a static mesh component to an actor
+class MyActor extends ue.Actor {
+    Constructor() {
+        let meshComp = this.CreateDefaultSubobject(
+            "MyMesh", ue.StaticMeshComponent
+        );
+        this.RootComponent = meshComp;
+    }
+}
+```
+
+</TabItem>
+</Tabs>
+
+## The Component Hierarchy
+
+Components form a tree. Every Actor has a **Root Component** at the top, and other components attach underneath it. When the root moves, everything attached moves with it — like a puppet on strings.
+
+```
+MyCharacter (Actor)
+├── CapsuleComponent (Root)
+│   ├── SkeletalMeshComponent
+│   │   └── AudioComponent
+│   └── CameraComponent
+└── CharacterMovementComponent
+```
+
+## Building Blocks, Not Monoliths
+
+The beauty of components is reusability. Instead of creating a totally new Actor class for every object, you mix and match components. A treasure chest and a mailbox might share the same `InteractableComponent` — different look, same open/close behavior. Build small, compose big.
+
+:::tip
+If you find yourself copying logic between Actor classes, that logic probably belongs in a shared component instead.
+:::

@@ -1,0 +1,197 @@
+---
+title: "Debugging"
+sidebar_position: 8
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Debugging
+
+Things will break. Here's how to find out why.
+
+## Printing to the Output Log
+
+Your first debugging tool is the Output Log (**Window > Output Log** in HELIX Studio).
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Print String Debugging"
+
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:20, y:60, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:280, y:60, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Debug: Actor started"'},
+      {id:'screen',label:'Print to Screen',type:'bool',side:'input',value:'true'},
+      {id:'log',label:'Print to Log',type:'bool',side:'input',value:'true'},
+      {id:'color',label:'Text Color',type:'struct',side:'input'},
+      {id:'dur',label:'Duration',type:'float',side:'input',value:'5.0'}
+    ]}
+  ]}
+  wires={[{from:{node:'bp',pin:'eo'},to:{node:'ps',pin:'ei'}}]}
+/>
+
+For formatted output, use **Format String** or **Append** nodes to build your message before passing it to Print String.
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Basic print (goes to Output Log)
+print("Hello from Lua!")
+
+-- Print variables
+local health = 75
+local name = "Player1"
+print(string.format("Player %s has %d HP", name, health))
+
+-- UE log with categories
+UE.UKismetSystemLibrary.PrintString(
+    nil,                    -- world context
+    "Debug message",        -- message
+    true,                   -- print to screen
+    true,                   -- print to log
+    UE.FLinearColor(1, 1, 0, 1),  -- yellow
+    5.0                     -- screen duration
+)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Standard console methods (all go to Output Log)
+console.log("Info message");
+console.warn("Warning message");    // yellow in the log
+console.error("Error message");     // red in the log
+
+// Structured data
+const playerData = { name: "Player1", health: 75, position: { x: 100, y: 200 } };
+console.log("Player data:", JSON.stringify(playerData, null, 2));
+
+// Quick timing
+console.time("SpawnEnemies");
+spawnAllEnemies();
+console.timeEnd("SpawnEnemies");  // prints "SpawnEnemies: 12.34ms"
+```
+
+</TabItem>
+</Tabs>
+
+## Blueprint Debugging in HELIX Studio
+
+HELIX Studio (built on UE5) has a powerful visual debugger for Blueprints:
+
+1. **Breakpoints** -- Click the left edge of any Blueprint node to set a breakpoint (red circle). Execution pauses there during Play-in-Editor.
+2. **Watch values** -- While paused, hover over any pin to see its current value.
+3. **Step controls** -- Use the toolbar buttons to Step Into, Step Over, or Resume.
+4. **Blueprint Profiler** -- **Window > Developer Tools > Blueprint Profiler** shows execution time per node.
+
+### Enabling debug flow
+
+When you hit Play with breakpoints set, the editor highlights the execution path with animated wires. This makes it easy to see which branch of an If/Branch node was taken.
+
+## Common Errors and Fixes
+
+| Error | What it means | Fix |
+|---|---|---|
+| `Accessed None` | You're using a variable that's null | Add an `IsValid` check before using the reference |
+| `Cast Failed` | The object isn't the type you expected | Use the Cast Failed pin to handle this case |
+| `Infinite loop detected` | A loop ran too many iterations | Check your loop exit condition; use a counter as a safety net |
+| `Module not found` (Lua) | `require` can't find your file | Check the module path matches your folder structure |
+| `Cannot read property of undefined` (JS) | Accessing a field on null/undefined | Add null checks or use optional chaining (`?.`) |
+
+## Debugging Network Issues
+
+Multiplayer bugs are the trickiest. Some tips:
+
+- **Use `HasAuthority`** to check if code is running on the server or client. Print which side you're on.
+- **Watch the Net Mode** in HELIX Studio's play settings. Test with "Play As Client" and multiple player windows.
+- **Log on both sides.** Add prints at the start of RPCs (Remote Procedure Calls) to confirm they're being received.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Network Authority Check"
+
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:20, y:80, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'auth', title:'Has Authority', style:'pure', x:200, y:160, pins:[
+      {id:'out',label:'Return Value',type:'bool',side:'output'}
+    ]},
+    { id:'br', title:'Branch', style:'branch', x:280, y:80, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'cond',label:'Condition',type:'bool',side:'input'},
+      {id:'true',label:'True',type:'exec',side:'output'},
+      {id:'false',label:'False',type:'exec',side:'output'}
+    ]},
+    { id:'ps1', title:'Print String', style:'function', x:540, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Running on SERVER"'}
+    ]},
+    { id:'ps2', title:'Print String', style:'function', x:540, y:180, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Running on CLIENT"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'br',pin:'ei'}},
+    {from:{node:'auth',pin:'out'},to:{node:'br',pin:'cond'}},
+    {from:{node:'br',pin:'true'},to:{node:'ps1',pin:'ei'}},
+    {from:{node:'br',pin:'false'},to:{node:'ps2',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+function M:OnPlayerAction(player, action)
+    if self:HasAuthority() then
+        print("[SERVER] OnPlayerAction:", player:GetName(), action)
+    else
+        print("[CLIENT] OnPlayerAction:", player:GetName(), action)
+    end
+end
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+OnPlayerAction(player, action) {
+    const side = this.HasAuthority() ? "SERVER" : "CLIENT";
+    console.log(`[${side}] OnPlayerAction: ${player.GetName()} - ${action}`);
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Console Commands
+
+Open the console in HELIX Studio with the **`** (backtick) key:
+
+| Command | What it does |
+|---|---|
+| `stat fps` | Show FPS counter |
+| `stat unit` | Show frame time breakdown |
+| `UnLua.HotReload` | Reload all Lua scripts |
+| `ShowDebug` | Toggle debug info overlay |
+| `log LogBlueprintUserMessages Verbose` | See all Blueprint print messages |
+
+## Tips
+
+- Remove or disable debug prints before publishing. Heavy logging tanks performance.
+- Use screen-printed debug text (`Print to Screen`) for real-time values you need to watch while playing.
+- When something works in single-player but breaks in multiplayer, it's almost always a replication or authority issue. Check the [Client-Server Model](/docs/multiplayer/client-server-model) docs.

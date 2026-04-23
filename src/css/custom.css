@@ -1,0 +1,271 @@
+/* HELIX Documentation Theme */
+/* Branding derived from helixgame.com */
+
+:root {
+  /* Light mode (secondary) */
+  --ifm-color-primary: #04ddb5;
+  --ifm-color-primary-dark: #03c7a3;
+  --ifm-color-primary-darker: #03bc9a;
+  --ifm-color-primary-darkest: #029b7f;
+  --ifm-color-primary-light: #1ae8c4;
+  --ifm-color-primary-lighter: #2dead0;
+  --ifm-color-primary-lightest: #5cf0dc;
+  --ifm-font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+  --ifm-heading-font-family: 'Tomorrow', var(--ifm-font-family-base);
+  --ifm-font-family-monospace: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --ifm-code-font-size: 90%;
+  --helix-gradient: linear-gradient(150deg, #04ffd1, #0ad4b0 48%, #04ddb5);
+  --helix-accent: #04ffd1;
+  --helix-accent-dim: #0ad4b0;
+  --helix-accent-glow: rgba(4, 255, 209, 0.4);
+}
+
+/* Dark mode (primary) */
+[data-theme='dark'] {
+  --ifm-color-primary: #04ffd1;
+  --ifm-color-primary-dark: #00e6bc;
+  --ifm-color-primary-darker: #00d9b2;
+  --ifm-color-primary-darkest: #00b392;
+  --ifm-color-primary-light: #2effda;
+  --ifm-color-primary-lighter: #3cffe0;
+  --ifm-color-primary-lightest: #75ffea;
+  --ifm-background-color: #0a0a0a;
+  --ifm-background-surface-color: #141414;
+  --ifm-navbar-background-color: #0a0a0a;
+  --ifm-footer-background-color: #050505;
+  --ifm-card-background-color: #141414;
+  --ifm-toc-border-color: #1e1e1e;
+  --ifm-color-emphasis-300: #2a2a2a;
+}
+
+/* Headings - Tomorrow font */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--ifm-heading-font-family);
+  font-weight: 600;
+}
+
+/* Navbar styling */
+.navbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+}
+
+.navbar__title {
+  font-family: 'Tomorrow', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.navbar__logo {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.navbar__logo img {
+  height: 18px;
+  width: auto;
+}
+
+/* Sidebar tweaks */
+.menu__link {
+  font-size: 0.9rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+  background: linear-gradient(135deg, rgba(4, 255, 209, 0.1), rgba(4, 255, 209, 0.04));
+  border-left: 3px solid var(--helix-accent);
+}
+
+/* Code blocks */
+.prism-code {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Tabs - language switcher */
+.tabs__item {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 8px 16px;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.2s ease;
+}
+
+.tabs__item--active {
+  background: linear-gradient(135deg, rgba(4, 255, 209, 0.12), rgba(4, 255, 209, 0.06));
+  border-bottom: 2px solid var(--helix-accent);
+}
+
+/* Custom admonitions */
+.admonition {
+  border-radius: 8px;
+  border-left-width: 4px;
+}
+
+/* Authority badges */
+.authority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: 'Tomorrow', sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.authority-badge--server {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.authority-badge--client {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.authority-badge--both {
+  background: rgba(4, 255, 209, 0.12);
+  color: #04ffd1;
+  border: 1px solid rgba(4, 255, 209, 0.25);
+}
+
+/* Concept callout */
+.concept-callout {
+  background: linear-gradient(135deg, rgba(4, 255, 209, 0.06), rgba(4, 255, 209, 0.02));
+  border: 1px solid rgba(4, 255, 209, 0.15);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 0;
+}
+
+.concept-callout__title {
+  font-family: 'Tomorrow', sans-serif;
+  font-weight: 600;
+  color: var(--helix-accent);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* FiveM comparison table */
+.fivem-comparison {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.fivem-comparison th {
+  font-family: 'Tomorrow', sans-serif;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+/* Landing page hero gradient */
+.hero-gradient {
+  background: var(--helix-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Table styling */
+table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+[data-theme='dark'] table {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme='dark'] th {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Footer */
+.footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.footer__title {
+  font-family: 'Tomorrow', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Atlas pill input bar — styles in atlas-chat.css */
+
+/* Download template button */
+.download-template {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--helix-accent), var(--helix-accent-dim));
+  color: #0a0a0a;
+  border-radius: 8px;
+  font-family: 'Tomorrow', sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.download-template:hover {
+  color: #0a0a0a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px var(--helix-accent-glow);
+}
+
+/* Mobile sidebar — v4 compat (infima rules stripped in future mode) */
+.navbar-sidebar--show .navbar-sidebar,
+.navbar-sidebar--show .navbar-sidebar__backdrop {
+  opacity: 1;
+  visibility: visible;
+}
+
+.navbar-sidebar--show .navbar-sidebar {
+  transform: translate3d(0, 0, 0);
+}
+
+.navbar-sidebar {
+  height: 100vh;
+}
+
+.navbar-sidebar__items {
+  height: calc(100vh - var(--ifm-navbar-height));
+}
+
+.navbar-sidebar__item {
+  min-height: 100%;
+  overflow-y: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar__logo img {
+    height: 20px;
+  }
+}
+/* Atlas pill responsive styles in atlas-chat.css */

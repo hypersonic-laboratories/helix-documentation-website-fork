@@ -1,0 +1,44 @@
+---
+title: Levels & Maps
+sidebar_position: 1
+---
+
+# Levels & Maps
+
+Think of a **Level** as a movie set. It's the stage where everything in your game happens — the terrain, the buildings, the lighting, the characters walking around. When you open HELIX Studio and start placing things in the world, you're building a Level.
+
+## Levels vs Maps
+
+These two terms get used interchangeably, and that's mostly fine. Technically, a **Map** (`.umap` file) is the file saved to disk, and a **Level** is what gets loaded into memory at runtime. In practice, people say "map" and "level" to mean the same thing. Don't overthink it.
+
+## Sub-Levels
+
+As your world grows, cramming everything into one Level becomes a mess — like trying to fit an entire film production onto a single soundstage. **Sub-Levels** let you split your world into layers.
+
+Common sub-level setups:
+- **Landscape** sub-level for terrain
+- **Lighting** sub-level for all your light actors
+- **Audio** sub-level for ambient sounds
+- **Gameplay** sub-level for spawn points, triggers, and logic
+
+Each sub-level can be loaded or unloaded independently, and different team members can work on different sub-levels without stepping on each other's toes.
+
+To add a sub-level in HELIX Studio, open **Window > Levels** and click **Add Existing** or **Create New**.
+
+## World Partition
+
+Building a massive open world? **World Partition** is your best friend. Instead of manually managing which sub-levels load and unload, World Partition automatically streams chunks of the world in and out based on the player's position.
+
+How it works:
+- Your world is divided into a grid of cells
+- Only cells near the player get loaded into memory
+- As the player moves, new cells stream in and distant ones stream out
+- You set the loading distance based on your performance needs
+
+This means you can build enormous landscapes without worrying about loading the entire thing at once. Players only ever see and interact with what's nearby.
+
+To enable World Partition, go to **World Settings > World Partition** in HELIX Studio when creating a new level.
+
+:::tip
+For smaller game modes (arenas, lobbies, minigames), regular sub-levels work great. Save World Partition for the big open-world stuff.
+:::

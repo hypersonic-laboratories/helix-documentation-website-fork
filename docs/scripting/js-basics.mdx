@@ -1,0 +1,224 @@
+---
+title: "JavaScript Basics"
+sidebar_position: 4
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# JavaScript Basics
+
+HELIX uses [PuerTS](https://github.com/nicedoc/nicedoc.io), Tencent's V8-based JavaScript/TypeScript runtime for Unreal Engine. If you're a web developer, you'll feel right at home.
+
+## Setting Up
+
+1. In your Package folder, create a `Scripts` directory
+2. Add `.js` or `.ts` files inside it
+3. Register your script entry point in `package.json` under the `"scripts"` field
+
+```json
+{
+  "name": "my-package",
+  "version": "1.0.0",
+  "scripts": {
+    "main": "Scripts/Main.js"
+  }
+}
+```
+
+For TypeScript, HELIX compiles `.ts` files automatically. Add a `tsconfig.json` to your Package root for custom compiler options.
+
+## Accessing UE APIs
+
+HELIX provides bindings to Unreal Engine classes:
+
+```javascript
+const UE = require("ue");
+const { Actor, GameplayStatics, KismetSystemLibrary, Vector } = UE;
+
+// Get all actors of a class
+const players = GameplayStatics.GetAllActorsOfClass(
+    world,
+    UE.HELIXCharacter.StaticClass()
+);
+
+// Spawn an actor
+const location = new Vector(100, 200, 0);
+const rotation = new UE.Rotator(0, 0, 0);
+const actor = GameplayStatics.BeginDeferredActorSpawnFromClass(
+    world,
+    UE.MyBlueprintClass.StaticClass(),
+    new UE.Transform(rotation, location, new Vector(1, 1, 1))
+);
+GameplayStatics.FinishSpawningActor(actor, actor.GetTransform());
+```
+
+## Binding to Blueprint Classes
+
+Create a JavaScript class that extends a Blueprint class:
+
+```javascript
+const UE = require("ue");
+
+class MyCharacter extends UE.HELIXCharacter {
+    constructor() {
+        super();
+        this.health = 100;
+        this.inventory = [];
+    }
+
+    ReceiveBeginPlay() {
+        console.log("Character spawned with health:", this.health);
+    }
+
+    ReceiveTick(deltaTime) {
+        // Called every frame
+    }
+
+    OnPlayerInteract(otherPlayer) {
+        console.log(`${otherPlayer.GetName()} interacted with us`);
+    }
+}
+
+module.exports = MyCharacter;
+```
+
+## Using npm Packages
+
+One of HELIX JavaScript's biggest strengths is npm access. Install packages into your Package folder:
+
+```bash
+cd MyPackage
+npm init -y
+npm install lodash uuid
+```
+
+Then use them in your scripts:
+
+```javascript
+const _ = require("lodash");
+const { v4: uuidv4 } = require("uuid");
+
+const playerId = uuidv4();
+const sorted = _.sortBy(players, ["score"]);
+```
+
+:::note
+Not every npm package works out of the box. Packages that rely on Node.js-specific APIs (filesystem, network, child processes) won't work unless HELIX provides equivalent APIs. Pure logic packages (lodash, uuid, date-fns) work great.
+:::
+
+## Async/Await
+
+HELIX's JavaScript runtime supports modern async patterns. This is huge for things like HTTP requests, database queries, and sequential game logic:
+
+```javascript
+// Database queries use the Helix.Database module
+Helix.server(async () => {
+    await Helix.Database.connect({
+        host: "localhost",
+        database: "gamedb",
+        username: "root",
+        password: "pass",
+        dialect: "mysql"
+    });
+
+    // Use your ORM models for queries
+    const player = await db.Player.findOne({
+        where: { id: playerId }
+    });
+    console.log("Loaded player:", player.dataValues);
+});
+
+// Async game logic with standard JS timers
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function gameStartSequence() {
+    console.log("Starting countdown...");
+    await delay(3000);
+
+    console.log("Spawning players...");
+    // Use your game's player management logic
+    console.log("Game started!");
+}
+```
+
+## Module System
+
+HELIX supports both CommonJS and ES module patterns:
+
+```javascript
+// CommonJS (require/module.exports)
+const Utils = require("./Utils");
+module.exports = { MyClass };
+
+// ES Modules (import/export) -- requires .mjs or tsconfig setting
+import { formatTime } from "./Utils.mjs";
+export class MyClass { }
+```
+
+### Organizing your code
+
+```
+MyPackage/
+  Scripts/
+    Main.js          -- entry point
+    Systems/
+      Combat.js
+      Inventory.js
+    Utils/
+      Math.js
+      Formatting.js
+```
+
+## TypeScript
+
+Add a `tsconfig.json` in your Package root:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "./Scripts",
+    "rootDir": "./TypeScript"
+  },
+  "include": ["TypeScript/**/*"]
+}
+```
+
+```typescript
+// TypeScript gives you type safety with UE classes
+import * as UE from "ue";
+
+interface PlayerData {
+    id: string;
+    name: string;
+    score: number;
+}
+
+class ScoreManager {
+    private scores: Map<string, PlayerData> = new Map();
+
+    addScore(playerId: string, points: number): void {
+        const data = this.scores.get(playerId);
+        if (data) {
+            data.score += points;
+        }
+    }
+
+    getLeaderboard(): PlayerData[] {
+        return [...this.scores.values()].sort((a, b) => b.score - a.score);
+    }
+}
+```
+
+## Tips
+
+- Use `console.log()`, `console.warn()`, and `console.error()` -- they all go to the Output Log.
+- TypeScript is strongly recommended for larger projects. The type checking catches entire categories of bugs at compile time.
+- Source maps are supported, so stack traces point to your original `.ts` files.
+- Use `async`/`await` instead of callback chains. It keeps your game logic readable.

@@ -1,0 +1,75 @@
+---
+title: World Building
+sidebar_position: 7
+---
+
+# World Building
+
+HELIX gives you powerful tools to craft immersive open worlds. Between **HELIX Studio** (a customized Unreal Editor), the in-game Build Mode, UE5's rendering tech, and the dynamic weather system, you can create environments that look stunning and feel alive.
+
+## HELIX Studio
+
+**HELIX Studio** is a customized version of Unreal Editor purpose-built for creating HELIX Worlds and Packages. It is the primary tool for world creation, giving you full access to UE5's level editing, Blueprint scripting, and asset pipelines.
+
+Key capabilities of HELIX Studio:
+
+- **Full Unreal Editor** -- sculpt terrain, place actors, build levels, and design gameplay using the complete UE5 toolset.
+- **Package management** -- create and manage Map, Vehicle, Wearable, and Addon packages directly in the editor.
+- **Vault integration** -- add dependencies from Vault and reference assets from other packages.
+- **Play in Editor (PIE)** -- test your world locally, including client-server net modes with emulated latency.
+- **One-click publishing** -- publish Worlds and Packages to Vault or export PAK files for local testing.
+
+You get HELIX Studio through the **HELIX Launcher**, and every project represents a HELIX World that can reference packages as dependencies.
+
+## Build Mode
+
+Build Mode is HELIX's in-game runtime editor for placing and arranging objects in real time. It is available in **single-player worlds** and is useful for creating **Dynamic Maps** by dragging and dropping assets from packages.
+
+Key features of Build Mode:
+
+- **Drag-and-drop placement** from mounted package assets
+- **Dynamic Maps** built from primitives and assets at runtime
+- **Level instances** for embedding native UE levels into dynamic maps
+- **Player Start placement** for defining spawn points
+
+Build Mode is complementary to HELIX Studio. Use HELIX Studio for full-featured level design and Build Mode for rapid in-game iteration on dynamic maps.
+
+## Nanite & Lumen
+
+HELIX runs on UE5, which means you get access to **Nanite** and **Lumen** out of the box.
+
+**Nanite** is UE5's virtualized geometry system. It lets you use film-quality meshes with millions of polygons without worrying about manual LOD (level of detail) setup. Import detailed props and terrain — Nanite handles the performance optimization automatically.
+
+**Lumen** is the global illumination and reflection system. It provides fully dynamic lighting with realistic bounce light, soft shadows, and accurate reflections. Change the time of day or move a light source, and the entire scene updates in real time. No baking required.
+
+## Terrain
+
+The terrain system supports large-scale landscapes with multiple material layers (grass, dirt, rock, snow). You can sculpt elevation, paint surfaces, and place foliage directly in Build Mode or through the editor.
+
+## Weather System
+
+HELIX includes a dynamic weather system controlled through the [`WeatherType`](/api/enums) enum. You can switch between weather states or blend them over time for smooth transitions.
+
+Available weather types include:
+
+| WeatherType | Description |
+|---|---|
+| `WeatherType.ClearSkies` | No clouds or weather effects |
+| `WeatherType.PartlyCloudy` | Scattered clouds with sunlight |
+| `WeatherType.Cloudy` | Overcast sky, no rain |
+| `WeatherType.Overcast` | Dense cloud cover, darker lighting |
+| `WeatherType.Foggy` | Low visibility due to fog |
+| `WeatherType.RainLight` | Light rain effect |
+| `WeatherType.Rain` | Steady moderate rainfall |
+| `WeatherType.RainThunderstorm` | Heavy rain with thunder and lightning |
+| `WeatherType.SnowLight` | Light snowfall |
+| `WeatherType.Snow` | Normal snow accumulation |
+| `WeatherType.SnowBlizzard` | Strong snowstorm with wind |
+| `WeatherType.SandDustCalm` | Light sand/dust in the air |
+| `WeatherType.SandDustStorm` | Heavy dust storm conditions |
+
+Weather is controlled through the `Sky` class, which wraps UE5's Ultra Dynamic Sky and Ultra Dynamic Weather systems. You can change weather with transitions and combine it with the audio system for matching ambient sounds.
+
+:::tip
+Use Lumen's dynamic lighting alongside the weather system for dramatic effect. A thunderstorm with lightning flashes casting real-time shadows looks incredible with zero extra setup.
+:::

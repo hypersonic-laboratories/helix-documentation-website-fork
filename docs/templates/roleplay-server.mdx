@@ -1,0 +1,86 @@
+---
+title: "Roleplay Server Template"
+sidebar_position: 2
+---
+
+# Roleplay Server Template
+
+The Roleplay Server template gives you a fully functional RP server out of the box. It comes with QBCore pre-configured, a starter city map, and all the essential packages needed to run a roleplay community.
+
+## What's Included
+
+- **QBCore framework** -- Player management, economy, jobs, and inventory all pre-wired
+- **Character creation** -- Multi-character selection and appearance customization
+- **Starter city map** -- A small city layout with key locations: police station, hospital, car dealership, bank, and several shops
+- **Pre-configured jobs** -- Police, EMS, mechanic, and taxi are set up and ready to go
+- **Vehicle garage** -- Players can store and retrieve vehicles from garage locations
+- **Banking system** -- ATMs and bank interiors with full transaction support
+- **Admin tools** -- Admin menu for managing players, teleporting, and server maintenance
+
+## Project Structure
+
+After creating a project from this template, your `packages/` folder will look like this:
+
+```
+packages/
+  qb-core/           -- Framework core
+  qb-multicharacter/  -- Character selection
+  qb-spawn/           -- Spawn location picker
+  qb-clothing/        -- Appearance customization
+  qb-inventory/       -- Inventory system
+  qb-policejob/       -- Police job
+  qb-ambulancejob/    -- EMS job
+  qb-mechanicjob/     -- Mechanic job
+  qb-vehicleshop/     -- Car dealership
+  qb-garages/         -- Vehicle storage
+  qb-banking/         -- ATMs and bank accounts
+  qb-adminmenu/       -- Admin tools
+  rp-hud/             -- Health, hunger, thirst HUD
+```
+
+## Key Configuration Files
+
+| File | Purpose |
+|---|---|
+| `Config.json` | Server name, max players, package list |
+| `qb-core/config.lua` | Default spawn, starting money, PVP toggle |
+| `qb-core/shared/jobs.lua` | Job definitions and grades |
+| `qb-core/shared/items.lua` | Item registry |
+| `qb-core/shared/vehicles.lua` | Vehicle catalog |
+
+## Customizing the Template
+
+### Changing the Starting Location
+
+Open `qb-core/config.lua` and update `DefaultSpawn`:
+
+```lua
+QBConfig.DefaultSpawn = Vector(200.0, -950.0, 30.0)  -- your coordinates
+```
+
+### Adding a New Job
+
+Edit `qb-core/shared/jobs.lua` and add your job definition:
+
+```lua
+QBCore.Shared.Jobs.miner = {
+    label = "Miner",
+    type = "work",
+    defaultDuty = true,
+    grades = {
+        [0] = { name = "apprentice", payment = 800 },
+        [1] = { name = "miner",     payment = 1200 },
+        [2] = { name = "foreman",   payment = 1800 },
+    },
+}
+```
+
+### Modifying the Map
+
+Open the world file in HELIX Studio to edit the city layout. You can add buildings, move locations, and place new points of interest using the full UE5 editor. All location-dependent scripts (like job zones and shop positions) are configured in their respective package config files, so update those after moving things around.
+
+## Next Steps
+
+- Browse [QBCore Packages](/docs/qbcore/packages) to add more features
+- Read the [QBCore API](/docs/qbcore/api) to start writing custom scripts
+- Set up your server for players via [Instant Hosting](/docs/publishing/instant-hosting)

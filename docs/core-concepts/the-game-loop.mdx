@@ -1,0 +1,153 @@
+---
+title: "The Game Loop"
+sidebar_position: 5
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# The Game Loop
+
+Every game is a loop. Dozens of times per second, the engine checks input, updates the world, and draws a new frame. Understanding this loop is the key to making things *happen* in HELIX.
+
+## The Big Three
+
+### BeginPlay — "The curtain rises"
+
+Called **once** when an Actor enters the world. This is where you set up initial state: grab references, set default variables, play an intro animation. Think of it as your Actor's constructor for gameplay logic.
+
+### Tick — "Every single frame"
+
+Called **every frame** (30, 60, 120+ times per second depending on framerate). Anything you put here runs constantly. Moving a platform, checking a distance, interpolating a value — Tick handles the continuous stuff.
+
+### EndPlay — "Lights out"
+
+Called **once** when an Actor is destroyed or the game ends. Clean up timers, save data, release resources. If BeginPlay is where you set things up, EndPlay is where you tear them down.
+
+## Code Examples
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+**BeginPlay — Print a message on start:**
+
+<BlueprintGraph
+  title="BeginPlay Example"
+
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:60, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:300, y:60, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Hello, HELIX!"'}
+    ]}
+  ]}
+  wires={[{from:{node:'bp',pin:'eo'},to:{node:'ps',pin:'ei'}}]}
+/>
+
+**Tick — Move an Actor upward each frame:**
+
+<BlueprintGraph
+  title="Tick Movement Example"
+
+  nodes={[
+    { id:'tick', title:'Event Tick', style:'event', x:20, y:60, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'dt',label:'Delta Seconds',type:'float',side:'output'}
+    ]},
+    { id:'getloc', title:'Get Actor Location', style:'pure', x:200, y:120, pins:[
+      {id:'loc',label:'Return Value',type:'vector',side:'output'}
+    ]},
+    { id:'mul', title:'Float * Float', style:'pure', x:260, y:20, pins:[
+      {id:'a',label:'A',type:'float',side:'input'},
+      {id:'b',label:'B',type:'float',side:'input',value:'50.0'},
+      {id:'out',label:'Return Value',type:'float',side:'output'}
+    ]},
+    { id:'add', title:'Vector + Vector', style:'pure', x:460, y:80, pins:[
+      {id:'a',label:'A',type:'vector',side:'input'},
+      {id:'b',label:'B',type:'vector',side:'input'},
+      {id:'out',label:'Return Value',type:'vector',side:'output'}
+    ]},
+    { id:'setloc', title:'Set Actor Location', style:'function', x:670, y:60, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'loc',label:'New Location',type:'vector',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'tick',pin:'eo'},to:{node:'setloc',pin:'ei'}},
+    {from:{node:'tick',pin:'dt'},to:{node:'mul',pin:'a'}},
+    {from:{node:'getloc',pin:'loc'},to:{node:'add',pin:'a'}},
+    {from:{node:'mul',pin:'out'},to:{node:'add',pin:'b'}},
+    {from:{node:'add',pin:'out'},to:{node:'setloc',pin:'loc'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+function MyActor:ReceiveBeginPlay()
+    -- Runs once when the actor spawns
+    print("Hello, HELIX!")
+end
+
+function MyActor:ReceiveTick(DeltaTime)
+    -- Runs every frame
+    local loc = self:K2_GetActorLocation()
+    loc.Z = loc.Z + 50.0 * DeltaTime
+    self:K2_SetActorLocation(loc, false, nil, true)
+end
+
+function MyActor:ReceiveEndPlay(Reason)
+    -- Cleanup when the actor is destroyed
+    print("Goodbye!")
+end
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+class MyActor extends ue.Actor {
+    ReceiveBeginPlay() {
+        // Runs once when the actor spawns
+        console.log("Hello, HELIX!");
+    }
+
+    ReceiveTick(deltaTime) {
+        // Runs every frame
+        let loc = this.K2_GetActorLocation();
+        loc.Z += 50.0 * deltaTime;
+        this.K2_SetActorLocation(loc, false, undefined, true);
+    }
+
+    ReceiveEndPlay(reason) {
+        // Cleanup when the actor is destroyed
+        console.log("Goodbye!");
+    }
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Event-Driven vs Tick-Based: Choose Wisely
+
+**Tick** runs every frame whether something changed or not. That's expensive. If 200 actors all have Tick enabled, that's 200 functions running 60+ times per second.
+
+**Events** fire only when something actually happens — a key is pressed, a collision occurs, a timer goes off. They're far cheaper.
+
+| Use Tick for... | Use Events for... |
+|----------------|-------------------|
+| Smooth continuous movement | Button presses |
+| Real-time distance checks | Collisions and overlaps |
+| Interpolating values over time | Timers and delays |
+| Constant animation offsets | State changes |
+
+:::warning Performance heads-up
+If you can do it with an event, do it with an event. Disable Tick on actors that don't need it (uncheck **Start with Tick Enabled** in the class defaults). Your framerate will thank you, especially in multiplayer where every connected player adds load.
+:::

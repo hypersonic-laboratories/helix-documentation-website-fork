@@ -1,0 +1,138 @@
+---
+title: "Coordinate System"
+sidebar_position: 7
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Coordinate System
+
+Every object in your HELIX world has a position, and that position is described with three numbers: **X**, **Y**, and **Z**. Before you move, spawn, or place anything, you need to know how space works in Unreal Engine.
+
+## The Axes
+
+- **X** — Forward/backward (red arrow in HELIX Studio)
+- **Y** — Left/right (green arrow)
+- **Z** — Up/down (blue arrow) — **Z is up** in Unreal Engine
+
+The unit of measurement is **centimeters**. A value of `100` means 100 cm, or 1 meter. A doorway is roughly 200 units (2m) tall. A character stands about 180 units.
+
+## Vectors — Position and Direction
+
+A **Vector** (`FVector`) holds three floats: X, Y, Z. Use it for positions, directions, velocities, and scales. `FVector(0, 0, 100)` points straight up, one meter.
+
+## Rotators — Orientation
+
+A **Rotator** (`FRotator`) describes orientation using three angles in degrees:
+
+| Component | Axis | What it does |
+|-----------|------|-------------|
+| **Pitch** | Y | Tilts up/down (nodding your head) |
+| **Yaw** | Z | Turns left/right (shaking your head) |
+| **Roll** | X | Tilts sideways (tilting your head to your shoulder) |
+
+`FRotator(0, 90, 0)` means no pitch, rotated 90 degrees to the right, no roll.
+
+## Transforms — The Full Package
+
+A **Transform** (`FTransform`) bundles position + rotation + scale into one structure. Every Actor in the world has a transform. It fully describes where an object is, which way it's facing, and how big it is.
+
+## Code Examples
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Set Actor Location and Rotation"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'mv', title:'Make Vector', style:'pure', x:30, y:170, pins:[
+      {id:'x',label:'X',type:'float',side:'input',value:'500.0'},
+      {id:'y',label:'Y',type:'float',side:'input',value:'200.0'},
+      {id:'z',label:'Z',type:'float',side:'input',value:'100.0'},
+      {id:'out',label:'Return Value',type:'vector',side:'output'}
+    ]},
+    { id:'sal', title:'Set Actor Location', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'loc',label:'New Location',type:'vector',side:'input'},
+      {id:'ret',label:'Return Value',type:'bool',side:'output'}
+    ]},
+    { id:'mr', title:'Make Rotator', style:'pure', x:300, y:220, pins:[
+      {id:'pitch',label:'Pitch',type:'float',side:'input',value:'0.0'},
+      {id:'yaw',label:'Yaw',type:'float',side:'input',value:'90.0'},
+      {id:'roll',label:'Roll',type:'float',side:'input',value:'0.0'},
+      {id:'out',label:'Return Value',type:'rotator',side:'output'}
+    ]},
+    { id:'sar', title:'Set Actor Rotation', style:'function', x:570, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'rot',label:'New Rotation',type:'rotator',side:'input'},
+      {id:'ret',label:'Return Value',type:'bool',side:'output'}
+    ]},
+    { id:'dist', title:'Get Distance To', style:'pure', x:570, y:220, pins:[
+      {id:'target',label:'Target',type:'object',side:'input',value:'Actor A'},
+      {id:'other',label:'Other Actor',type:'object',side:'input',value:'Actor B'},
+      {id:'ret',label:'Return Value',type:'float',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'sal',pin:'ei'}},
+    {from:{node:'mv',pin:'out'},to:{node:'sal',pin:'loc'}},
+    {from:{node:'sal',pin:'eo'},to:{node:'sar',pin:'ei'}},
+    {from:{node:'mr',pin:'out'},to:{node:'sar',pin:'rot'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Create a vector and move an actor
+local new_position = Vector(500, 200, 100)
+self:K2_SetActorLocation(new_position, false, nil, true)
+
+local new_rotation = Rotator(0, 90, 0) -- Face right
+self:K2_SetActorRotation(new_rotation, true)
+
+-- Get distance between two actors
+local dist = self:GetDistanceTo(other_actor)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Create a vector and move an actor
+let newPosition = new Vector(500, 200, 100);
+this.K2_SetActorLocation(newPosition, false, undefined, true);
+
+let newRotation = new Rotator(0, 90, 0); // Face right
+this.K2_SetActorRotation(newRotation, true);
+
+// Get distance between two actors
+let dist = this.GetDistanceTo(otherActor);
+```
+
+</TabItem>
+</Tabs>
+
+## Quick Reference
+
+| Real-world thing | Approximate size in UE units |
+|-----------------|------------------------------|
+| A coin | 2-3 cm |
+| A door | 100 x 200 cm |
+| A character | ~180 cm tall |
+| A car | ~450 cm long |
+| A football field | ~10,000 cm |
+
+:::tip
+When something looks off — an object floating, clipping through the floor, or wildly oversized — check your units. A misplaced decimal can turn a coffee cup into a building.
+:::

@@ -1,0 +1,152 @@
+---
+title: "Trigger"
+sidebar_position: 10
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Trigger
+
+The **Trigger** class extends [Actor](./actor.mdx) and creates a shape-based volume in the world that detects when other actors overlap it. Triggers are useful for gameplay logic like entering zones, starting scripted events, teleporting players, or detecting proximity. Supported shapes include spheres, boxes, and capsules.
+
+:::tip
+`Trigger` is an `Actor`, so it inherits all functions from [Actor](./actor.mdx).
+:::
+
+---
+
+## Constructor
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Spawn Trigger Actor"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'spawn', title:'Spawn Actor from Class', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'class',label:'Class',type:'class',side:'input',value:'Trigger'},
+      {id:'transform',label:'Spawn Transform',type:'transform',side:'input'},
+      {id:'ret',label:'Return Value',type:'object',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'spawn',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Spawn a sphere trigger
+local trig = Trigger(
+    Vector(0, 0, 200),        -- location
+    Rotator(),                 -- rotation
+    Vector(100),               -- extent (radius for sphere)
+    TriggerType.Sphere,        -- trigger shape
+    true,                      -- visible (debug shape)
+    function(self, other)      -- callback on overlap
+        print(other:GetName())
+    end,
+    Color(1, 0, 0, 0.5)       -- debug color
+)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for constructor parameters.
+```
+
+</TabItem>
+</Tabs>
+
+### Constructor Parameters
+
+| Name | Type | Default | Description |
+|---|---|---|---|
+| `Location` | `Vector` | `(0,0,0)` | World position for the trigger. |
+| `Rotation` | `Rotator` | `(0,0,0)` | World rotation. |
+| `Extent` | `Vector` | `(100,100,100)` | Shape extents (radius, box half-size, or capsule radius/height). |
+| `TriggerType` | `enum` | `TriggerType.Sphere` | Shape of the volume -- Sphere, Box, or Capsule. |
+| `bVisible` | `boolean` | `false` | If true, draws a semi-transparent debug shape. |
+| `CallbackFunction` | `function` | **Required** | Function called on actor overlap. Receives `(self, otherActor)`. |
+| `Color` | `Color` | `(0,1,0,0.5)` | Debug color if visible. |
+| `OverlapOnlyClasses` | `table` | `{}` | Optional array of UClass paths to restrict overlap (e.g., only `"/Script/Engine.Pawn"`). |
+
+---
+
+## Examples
+
+### Safe Zone
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Safe Zone Trigger with Overlap Event"
+  nodes={[
+    { id:'overlap', title:'Event ActorBeginOverlap', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'other',label:'Other Actor',type:'object',side:'output'}
+    ]},
+    { id:'name', title:'Get Display Name', style:'pure', x:300, y:120, pins:[
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'ret',label:'Return Value',type:'string',side:'output'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:550, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'overlap',pin:'eo'},to:{node:'ps',pin:'ei'}},
+    {from:{node:'overlap',pin:'other'},to:{node:'name',pin:'target'}},
+    {from:{node:'name',pin:'ret'},to:{node:'ps',pin:'str'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Create a safe zone trigger
+local safe_zone = Trigger(
+    Vector(0, 0, 0),
+    Rotator(),
+    Vector(2000, 2000, 500),
+    TriggerType.Box,
+    true,
+    function(self, other)
+        print(other:GetName() .. " entered the zone")
+    end,
+    Color(0, 1, 0, 0.3)
+)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for constructor parameters.
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+:::note
+When `bVisible` is set to `false` (the default), triggers are invisible in-game and have no visual representation. Set `bVisible` to `true` during development for debugging purposes.
+:::
