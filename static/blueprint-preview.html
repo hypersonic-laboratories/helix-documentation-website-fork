@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HELIX Blueprint Renderer Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; color: #fff; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+  h1 { padding: 20px 30px 5px; font-size: 1.4rem; color: #8b7cf6; }
+  h2 { padding: 15px 30px 5px; font-size: 1.1rem; color: #ccc; border-top: 1px solid #222; margin-top: 10px; }
+  p.desc { padding: 2px 30px 10px; font-size: 0.85rem; color: #777; }
+  .canvas-wrap { margin: 10px 20px 20px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); position: relative; }
+  .canvas-label { background: #1a1a1a; padding: 6px 14px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.06); font-family: 'Segoe UI', sans-serif; }
+  .canvas-label span { opacity: 0.5; margin-left: 8px; }
+  svg.bp-canvas { display: block; cursor: grab; }
+  svg.bp-canvas:active { cursor: grabbing; }
+  .node { cursor: grab; }
+  .node:active { cursor: grabbing; }
+  .node .header { pointer-events: none; }
+  .node text { pointer-events: none; user-select: none; }
+  .hint { position: fixed; bottom: 15px; right: 20px; background: rgba(102,84,241,0.15); border: 1px solid rgba(102,84,241,0.3); border-radius: 8px; padding: 10px 16px; font-size: 0.8rem; color: #c4b5fd; }
+</style>
+</head>
+<body>
+
+<h1>HELIX Blueprint Renderer Preview</h1>
+<p class="desc">Drag any node to rearrange. These render from JSON in real-time as an interactive SVG component.</p>
+
+<div class="hint">Drag nodes to move them around</div>
+
+<div id="examples"></div>
+
+<script>
+// ─── Pin & Node Colors (UE5-accurate) ────────────────────────────────
+const PIN_COLORS = {
+  exec:'#ffffff', bool:'#900000', byte:'#006D6B', int:'#1CC7A0',
+  float:'#A3D44C', string:'#F0A0C8', name:'#C8A0D8', text:'#DC90B8',
+  vector:'#FFC107', rotator:'#9370DB', transform:'#F28B22', object:'#0070E0',
+  class:'#6038A0', struct:'#0077FF', enum:'#006C7F', delegate:'#FF3838',
+  wildcard:'#808080', array:'#808080',
+};
+
+// Header gradient stops [topColor, bottomColor]
+const HEADER_GRADIENTS = {
+  function:       ['#2a6aaa','#1b4a7a'],
+  event:          ['#b01010','#7b0000'],
+  pure:           ['#4a8b45','#3a6b35'],
+  macro:          ['#8b7b5a','#6b5b3a'],
+  'variable-get': ['#3a8b5a','#2a6b3a'],
+  'variable-set': ['#3a8b5a','#2a6b3a'],
+  branch:         ['#7b7b7b','#555555'],
+  sequence:       ['#7b7b7b','#555555'],
+  'for-each':     ['#7b7b7b','#555555'],
+  cast:           ['#2b8b7a','#1b6b5a'],
+  select:         ['#7b7b7b','#555555'],
+};
+
+// Node type icon paths (small SVG symbols rendered in header)
+const NODE_ICONS = {
+  event:          { path:'M8,1 A7,7 0 1,1 8,15 A7,7 0 1,1 8,1 Z', fill:'#ff4444', stroke:'none', vb:'0 0 16 16' },
+  function:       { path:'M2,2 L7,2 L7,7 L2,7 Z M9,2 L14,2 L14,7 L9,7 Z M2,9 L7,9 L7,14 L2,14 Z M9,9 L14,9 L14,14 L9,14 Z', fill:'none', stroke:'#ddd', vb:'0 0 16 16' },
+  pure:           { path:'M2,2 L7,2 L7,7 L2,7 Z M9,2 L14,2 L14,7 L9,7 Z M2,9 L7,9 L7,14 L2,14 Z M9,9 L14,9 L14,14 L9,14 Z', fill:'none', stroke:'#8fd88f', vb:'0 0 16 16' },
+  macro:          { path:'M3,4 L13,4 M3,8 L13,8 M3,12 L13,12 M5,2 L5,14 M11,2 L11,14', fill:'none', stroke:'#ddd', vb:'0 0 16 16' },
+  'variable-get': { path:'M3,8 Q3,4 8,4 Q13,4 13,8 Q13,12 8,12 Q3,12 3,8 Z M6,8 A2,2 0 1,1 10,8 A2,2 0 1,1 6,8 Z', fill:'none', stroke:'#8fd88f', vb:'0 0 16 16' },
+  'variable-set': { path:'M8,2 L8,11 M5,8 L8,12 L11,8 M3,14 L13,14', fill:'none', stroke:'#8fd88f', vb:'0 0 16 16' },
+  branch:         { path:'M8,2 L14,8 L8,14 L2,8 Z', fill:'none', stroke:'#ddd', vb:'0 0 16 16' },
+  cast:           { path:'M3,8 L10,8 M7,5 L10,8 L7,11 M12,3 L12,13', fill:'none', stroke:'#5fd8c8', vb:'0 0 16 16' },
+  sequence:       { path:'M2,3 L14,3 M2,8 L14,8 M2,13 L14,13', fill:'none', stroke:'#ddd', vb:'0 0 16 16' },
+  'for-each':     { path:'M2,3 L14,3 M2,8 L14,8 M2,13 L14,13 M10,6 L13,8 L10,10', fill:'none', stroke:'#ddd', vb:'0 0 16 16' },
+  select:         { path:'M8,2 L14,8 L8,14 L2,8 Z', fill:'none', stroke:'#ddd', vb:'0 0 16 16' },
+};
+
+const HEADER_H = 30, PIN_H = 26, PIN_R = 6.5, EXEC_W = 11, EXEC_H = 13;
+
+function nodeWidth(n) {
+  if (n.style==='comment') return n.width || Math.max(320, n.title.length*9);
+  const tl = n.title.length*8.5 + 60; // +60 to account for icon space
+  const pl = Math.max(...n.pins.map(p => p.label.length*7.2 + (p.value?(p.value.length*6.8+36):0) + 36), 0);
+  return Math.max(200, tl, pl+70);
+}
+function nodeHeight(n) {
+  if (n.style==='comment') return n.height || 200;
+  const inp = n.pins.filter(p=>p.side==='input').length;
+  const out = n.pins.filter(p=>p.side==='output').length;
+  return HEADER_H + Math.max(inp,out,1)*PIN_H + 12;
+}
+function pinPos(n, pid) {
+  const pin = n.pins.find(p=>p.id===pid);
+  if (!pin) return {x:n.x,y:n.y};
+  const same = n.pins.filter(p=>p.side===pin.side);
+  const idx = same.indexOf(pin);
+  const w = nodeWidth(n);
+  return {
+    x: pin.side==='input' ? n.x : n.x+w,
+    y: n.y + HEADER_H + idx*PIN_H + PIN_H/2 + 5
+  };
+}
+
+function renderGraph(container, cfg) {
+  const wrap = document.createElement('div');
+  wrap.className = 'canvas-wrap';
+  const label = document.createElement('div');
+  label.className = 'canvas-label';
+  label.innerHTML = `Blueprint<span>\u2014 ${cfg.title||''}</span>`;
+  wrap.appendChild(label);
+
+  const W = cfg.width||850, H = cfg.height||360;
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns,'svg');
+  svg.setAttribute('width','100%');
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.classList.add('bp-canvas');
+  svg.style.background = '#1a1a1f';
+
+  // Defs: grid patterns, header gradients, shadow filter
+  const defs = document.createElementNS(ns,'defs');
+  let defsHTML = `
+    <pattern id="gs-${cfg.id}" width="16" height="16" patternUnits="userSpaceOnUse">
+      <path d="M 16 0 L 0 0 0 16" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/>
+    </pattern>
+    <pattern id="gl-${cfg.id}" width="80" height="80" patternUnits="userSpaceOnUse">
+      <rect width="80" height="80" fill="url(#gs-${cfg.id})"/>
+      <path d="M 80 0 L 0 0 0 80" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+    </pattern>
+    <filter id="nsh-${cfg.id}" x="-15%" y="-15%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.55"/>
+    </filter>`;
+
+  // Generate header gradients per style
+  for (const [style, [top, bot]] of Object.entries(HEADER_GRADIENTS)) {
+    defsHTML += `
+    <linearGradient id="hg-${style}-${cfg.id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${top}"/>
+      <stop offset="100%" stop-color="${bot}"/>
+    </linearGradient>`;
+  }
+
+  defs.innerHTML = defsHTML;
+  svg.appendChild(defs);
+
+  const bg = document.createElementNS(ns,'rect');
+  bg.setAttribute('width','100%'); bg.setAttribute('height','100%');
+  bg.setAttribute('fill',`url(#gl-${cfg.id})`);
+  svg.appendChild(bg);
+
+  // Mark connected pins
+  const connected = new Set();
+  cfg.wires.forEach(w => { connected.add(w.from.node+'.'+w.from.pin); connected.add(w.to.node+'.'+w.to.pin); });
+
+  // Layers: comments (back) → wires → nodes (front)
+  const commentLayer = document.createElementNS(ns,'g');
+  svg.appendChild(commentLayer);
+  const wireLayer = document.createElementNS(ns,'g');
+  svg.appendChild(wireLayer);
+  const nodeLayer = document.createElementNS(ns,'g');
+  svg.appendChild(nodeLayer);
+
+  function drawWires() {
+    wireLayer.innerHTML = '';
+    cfg.wires.forEach(w => {
+      const fn = cfg.nodes.find(n=>n.id===w.from.node);
+      const tn = cfg.nodes.find(n=>n.id===w.to.node);
+      if (!fn||!tn) return;
+      const fp = pinPos(fn, w.from.pin);
+      const tp = pinPos(tn, w.to.pin);
+      const fromPin = fn.pins.find(p=>p.id===w.from.pin);
+      const isExec = fromPin?.type==='exec';
+      const color = isExec ? '#ffffff' : (PIN_COLORS[fromPin?.type]||'#888');
+      const dx = Math.abs(tp.x-fp.x)*0.5;
+      const path = document.createElementNS(ns,'path');
+      path.setAttribute('d',`M ${fp.x} ${fp.y} C ${fp.x+dx} ${fp.y}, ${tp.x-dx} ${tp.y}, ${tp.x} ${tp.y}`);
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke',color);
+      path.setAttribute('stroke-width', isExec?3.5:2.2);
+      path.setAttribute('opacity','0.75');
+      wireLayer.appendChild(path);
+    });
+  }
+
+  function drawComments() {
+    commentLayer.innerHTML = '';
+    cfg.nodes.filter(n=>n.style==='comment').forEach(n => {
+      const g = document.createElementNS(ns,'g');
+      g.classList.add('node');
+      g.setAttribute('data-id', n.id);
+      const w = nodeWidth(n), h = nodeHeight(n);
+      const bannerH = 28;
+
+      // Body background
+      const body = document.createElementNS(ns,'rect');
+      body.setAttribute('x',n.x); body.setAttribute('y',n.y);
+      body.setAttribute('width',w); body.setAttribute('height',h);
+      body.setAttribute('rx','6');
+      body.setAttribute('fill','rgba(255,255,255,0.03)');
+      body.setAttribute('stroke','rgba(255,255,255,0.08)');
+      body.setAttribute('stroke-width','1');
+      g.appendChild(body);
+
+      // Title banner
+      const banner = document.createElementNS(ns,'rect');
+      banner.setAttribute('x',n.x); banner.setAttribute('y',n.y);
+      banner.setAttribute('width',w); banner.setAttribute('height',bannerH);
+      banner.setAttribute('rx','6');
+      banner.setAttribute('fill','rgba(255,255,255,0.06)');
+      g.appendChild(banner);
+      // Flat bottom edge for banner
+      const bannerBtm = document.createElementNS(ns,'rect');
+      bannerBtm.setAttribute('x',n.x); bannerBtm.setAttribute('y',n.y+bannerH-6);
+      bannerBtm.setAttribute('width',w); bannerBtm.setAttribute('height','6');
+      bannerBtm.setAttribute('fill','rgba(255,255,255,0.06)');
+      g.appendChild(bannerBtm);
+
+      // Banner separator line
+      const sep = document.createElementNS(ns,'line');
+      sep.setAttribute('x1',n.x); sep.setAttribute('y1',n.y+bannerH);
+      sep.setAttribute('x2',n.x+w); sep.setAttribute('y2',n.y+bannerH);
+      sep.setAttribute('stroke','rgba(255,255,255,0.06)');
+      sep.setAttribute('stroke-width','1');
+      g.appendChild(sep);
+
+      // Comment title text
+      const t = document.createElementNS(ns,'text');
+      t.setAttribute('x',n.x+10); t.setAttribute('y',n.y+18);
+      t.setAttribute('fill','rgba(255,255,255,0.6)');
+      t.setAttribute('font-size','13');
+      t.setAttribute('font-family','system-ui, sans-serif');
+      t.setAttribute('font-weight','400');
+      t.textContent = n.title;
+      g.appendChild(t);
+
+      // Drag behavior for comments
+      let dragging = false, ox, oy;
+      g.addEventListener('mousedown', e => {
+        dragging = true;
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX; pt.y = e.clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+        ox = svgP.x - n.x; oy = svgP.y - n.y;
+        e.stopPropagation();
+      });
+      svg.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX; pt.y = e.clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+        n.x = svgP.x - ox; n.y = svgP.y - oy;
+        drawComments(); drawWires(); drawNodes();
+      });
+      svg.addEventListener('mouseup', () => { dragging = false; });
+      svg.addEventListener('mouseleave', () => { dragging = false; });
+
+      commentLayer.appendChild(g);
+    });
+  }
+
+  function drawNodes() {
+    nodeLayer.innerHTML = '';
+    cfg.nodes.filter(n=>n.style!=='comment').forEach(n => {
+      const g = document.createElementNS(ns,'g');
+      g.classList.add('node');
+      g.setAttribute('data-id', n.id);
+      const w = nodeWidth(n), h = nodeHeight(n);
+      const style = n.style||'function';
+      const gradId = `hg-${style}-${cfg.id}`;
+      const haGrad = HEADER_GRADIENTS[style];
+      const hc = haGrad ? `url(#${gradId})` : '#1b4a7a';
+
+      // Node group with shadow filter
+      const outer = document.createElementNS(ns,'g');
+      outer.setAttribute('filter',`url(#nsh-${cfg.id})`);
+
+      // Body
+      const bd = document.createElementNS(ns,'rect');
+      bd.setAttribute('x',n.x); bd.setAttribute('y',n.y);
+      bd.setAttribute('width',w); bd.setAttribute('height',h);
+      bd.setAttribute('rx','8'); bd.setAttribute('fill','#2A2A2A');
+      bd.setAttribute('stroke','rgba(255,255,255,0.1)'); bd.setAttribute('stroke-width','1');
+      outer.appendChild(bd);
+
+      // Header (rounded top, flat bottom via overlay)
+      const hd = document.createElementNS(ns,'rect');
+      hd.setAttribute('x',n.x); hd.setAttribute('y',n.y);
+      hd.setAttribute('width',w); hd.setAttribute('height',HEADER_H);
+      hd.setAttribute('rx','8'); hd.setAttribute('fill',hc);
+      outer.appendChild(hd);
+      const hd2 = document.createElementNS(ns,'rect');
+      hd2.setAttribute('x',n.x); hd2.setAttribute('y',n.y+HEADER_H-8);
+      hd2.setAttribute('width',w); hd2.setAttribute('height','8');
+      hd2.setAttribute('fill',hc);
+      outer.appendChild(hd2);
+
+      // Header separator
+      const hl = document.createElementNS(ns,'line');
+      hl.setAttribute('x1',n.x); hl.setAttribute('y1',n.y+HEADER_H);
+      hl.setAttribute('x2',n.x+w); hl.setAttribute('y2',n.y+HEADER_H);
+      hl.setAttribute('stroke','rgba(0,0,0,0.4)'); hl.setAttribute('stroke-width','1');
+      outer.appendChild(hl);
+
+      g.appendChild(outer);
+
+      // Node type icon
+      const iconDef = NODE_ICONS[style];
+      let titleX = n.x + 14;
+      if (iconDef) {
+        const iconSz = 14;
+        const iconX = n.x + 9;
+        const iconY = n.y + (HEADER_H - iconSz) / 2;
+        const iconSvg = document.createElementNS(ns,'svg');
+        iconSvg.setAttribute('x', iconX);
+        iconSvg.setAttribute('y', iconY);
+        iconSvg.setAttribute('width', iconSz);
+        iconSvg.setAttribute('height', iconSz);
+        iconSvg.setAttribute('viewBox', iconDef.vb);
+        iconSvg.setAttribute('overflow','visible');
+        const p = document.createElementNS(ns,'path');
+        p.setAttribute('d', iconDef.path);
+        p.setAttribute('fill', iconDef.fill);
+        p.setAttribute('stroke', iconDef.stroke);
+        if (iconDef.stroke !== 'none') p.setAttribute('stroke-width', '1.5');
+        iconSvg.appendChild(p);
+        g.appendChild(iconSvg);
+        titleX = n.x + 28;
+      }
+
+      // Title
+      const tt = document.createElementNS(ns,'text');
+      tt.setAttribute('x', titleX); tt.setAttribute('y',n.y+20);
+      tt.setAttribute('fill','#fff'); tt.setAttribute('font-size','12.5');
+      tt.setAttribute('font-family','system-ui, sans-serif'); tt.setAttribute('font-weight','600');
+      tt.textContent = n.title;
+      g.appendChild(tt);
+
+      // Subtitle
+      if (n.subtitle) {
+        const st = document.createElementNS(ns,'text');
+        st.setAttribute('x',n.x+w-10); st.setAttribute('y',n.y+20);
+        st.setAttribute('fill','rgba(255,255,255,0.35)'); st.setAttribute('font-size','9.5');
+        st.setAttribute('text-anchor','end'); st.textContent = n.subtitle;
+        g.appendChild(st);
+      }
+
+      // Pins
+      ['input','output'].forEach(side => {
+        const pins = n.pins.filter(p=>p.side===side);
+        pins.forEach((pin,i) => {
+          const py = n.y + HEADER_H + i*PIN_H + PIN_H/2 + 5;
+          const isConn = connected.has(n.id+'.'+pin.id);
+          const color = PIN_COLORS[pin.type]||'#888';
+
+          if (pin.type==='exec') {
+            const px = side==='input' ? n.x+13 : n.x+w-13;
+            const dx = side==='input'?0:-EXEC_W;
+            const pts = `${px+dx},${py-EXEC_H/2} ${px+dx+EXEC_W*0.7},${py-EXEC_H/2} ${px+dx+EXEC_W},${py} ${px+dx+EXEC_W*0.7},${py+EXEC_H/2} ${px+dx},${py+EXEC_H/2}`;
+            const poly = document.createElementNS(ns,'polygon');
+            poly.setAttribute('points',pts);
+            poly.setAttribute('fill',isConn?'#fff':'none');
+            poly.setAttribute('stroke','#fff'); poly.setAttribute('stroke-width','1.5');
+            g.appendChild(poly);
+          } else {
+            const cx = side==='input' ? n.x+13+PIN_R : n.x+w-13-PIN_R;
+            const c = document.createElementNS(ns,'circle');
+            c.setAttribute('cx',cx); c.setAttribute('cy',py); c.setAttribute('r',PIN_R);
+            c.setAttribute('fill',isConn?color:'none');
+            c.setAttribute('stroke',color); c.setAttribute('stroke-width','1.5');
+            g.appendChild(c);
+          }
+
+          // Label
+          if (pin.label) {
+            const tx = side==='input' ? n.x+32 : n.x+w-32;
+            const anchor = side==='input'?'start':'end';
+            const lb = document.createElementNS(ns,'text');
+            lb.setAttribute('x',tx); lb.setAttribute('y',py+4);
+            lb.setAttribute('fill', pin.type==='exec'?'#ddd':color);
+            lb.setAttribute('font-size','11'); lb.setAttribute('font-family','system-ui, sans-serif');
+            lb.setAttribute('text-anchor',anchor); lb.setAttribute('opacity','0.92');
+            lb.textContent = pin.label;
+            g.appendChild(lb);
+          }
+
+          // Value box
+          if (pin.value && side==='input' && !isConn) {
+            const vx = n.x + 32 + (pin.label?pin.label.length*6.8+10:0);
+            const vw = pin.value.length*7+16;
+            const vr = document.createElementNS(ns,'rect');
+            vr.setAttribute('x',vx); vr.setAttribute('y',py-10);
+            vr.setAttribute('width',vw); vr.setAttribute('height','20');
+            vr.setAttribute('rx','4'); vr.setAttribute('fill','rgba(0,0,0,0.55)');
+            vr.setAttribute('stroke','rgba(255,255,255,0.08)'); vr.setAttribute('stroke-width','0.5');
+            g.appendChild(vr);
+            const vt = document.createElementNS(ns,'text');
+            vt.setAttribute('x',vx+8); vt.setAttribute('y',py+4);
+            vt.setAttribute('fill','#aaa'); vt.setAttribute('font-size','10.5');
+            vt.setAttribute('font-family','JetBrains Mono, monospace');
+            vt.textContent = pin.value;
+            g.appendChild(vt);
+          }
+        });
+      });
+
+      // Drag behavior
+      let dragging = false, ox, oy;
+      g.addEventListener('mousedown', e => {
+        dragging = true;
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX; pt.y = e.clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+        ox = svgP.x - n.x; oy = svgP.y - n.y;
+        e.stopPropagation();
+      });
+      svg.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX; pt.y = e.clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+        n.x = svgP.x - ox; n.y = svgP.y - oy;
+        drawComments(); drawWires(); drawNodes();
+      });
+      svg.addEventListener('mouseup', () => { dragging = false; });
+      svg.addEventListener('mouseleave', () => { dragging = false; });
+
+      nodeLayer.appendChild(g);
+    });
+  }
+
+  drawComments();
+  drawWires();
+  drawNodes();
+  wrap.appendChild(svg);
+  container.appendChild(wrap);
+}
+
+// ─── EXAMPLES ───────────────────────────────────────────────────────────
+
+const examples = [
+  {
+    id: 'ex1', title: 'Hello World \u2014 BeginPlay \u2192 Print String', width: 700, height: 240,
+    nodes: [
+      { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:60, pins:[
+        {id:'eo',label:'',type:'exec',side:'output'}
+      ]},
+      { id:'ps', title:'Print String', style:'function', x:340, y:30, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo2',label:'',type:'exec',side:'output'},
+        {id:'str',label:'In String',type:'string',side:'input',value:'Hello HELIX!'},
+        {id:'scr',label:'Print to Screen',type:'bool',side:'input',value:'true'},
+        {id:'clr',label:'Text Color',type:'struct',side:'input',value:'Cyan'},
+        {id:'dur',label:'Duration',type:'float',side:'input',value:'2.0'}
+      ]}
+    ],
+    wires: [{from:{node:'bp',pin:'eo'},to:{node:'ps',pin:'ei'}}]
+  },
+  {
+    id: 'ex2', title: 'Spawn Actor from Class on Key Press', width: 900, height: 340,
+    nodes: [
+      { id:'inp', title:'Input Action Fire', style:'event', x:20, y:50, pins:[
+        {id:'eo',label:'Pressed',type:'exec',side:'output'},
+        {id:'key',label:'Action Value',type:'vector',side:'output'}
+      ]},
+      { id:'loc', title:'Get Actor Location', subtitle:'Target is Self', style:'pure', x:20, y:190, pins:[
+        {id:'tgt',label:'Target',type:'object',side:'input'},
+        {id:'ret',label:'Return Value',type:'vector',side:'output'}
+      ]},
+      { id:'mt', title:'Make Transform', style:'pure', x:300, y:190, pins:[
+        {id:'loc',label:'Location',type:'vector',side:'input'},
+        {id:'rot',label:'Rotation',type:'rotator',side:'input',value:'0, 0, 0'},
+        {id:'scl',label:'Scale',type:'vector',side:'input',value:'1, 1, 1'},
+        {id:'ret',label:'Return Value',type:'transform',side:'output'}
+      ]},
+      { id:'sp', title:'Spawn Actor from Class', style:'function', x:580, y:30, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'cls',label:'Class',type:'class',side:'input',value:'BP_Projectile'},
+        {id:'tfm',label:'Spawn Transform',type:'transform',side:'input'},
+        {id:'col',label:'Collision Method',type:'enum',side:'input',value:'AlwaysSpawn'},
+        {id:'own',label:'Owner',type:'object',side:'input'},
+        {id:'ret',label:'Return Value',type:'object',side:'output'}
+      ]}
+    ],
+    wires: [
+      {from:{node:'inp',pin:'eo'},to:{node:'sp',pin:'ei'}},
+      {from:{node:'loc',pin:'ret'},to:{node:'mt',pin:'loc'}},
+      {from:{node:'mt',pin:'ret'},to:{node:'sp',pin:'tfm'}}
+    ]
+  },
+  {
+    id: 'ex3', title: 'Branch \u2014 Health Check with Destroy', width: 900, height: 340,
+    nodes: [
+      { id:'tick', title:'Event Tick', style:'event', x:15, y:40, pins:[
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'dt',label:'Delta Seconds',type:'float',side:'output'}
+      ]},
+      { id:'gh', title:'Get Health', style:'pure', x:30, y:190, pins:[
+        {id:'tgt',label:'Target',type:'object',side:'input'},
+        {id:'ret',label:'Health',type:'float',side:'output'}
+      ]},
+      { id:'cmp', title:'<=', subtitle:'Float <= Float', style:'pure', x:250, y:190, pins:[
+        {id:'a',label:'A',type:'float',side:'input'},
+        {id:'b',label:'B',type:'float',side:'input',value:'0.0'},
+        {id:'ret',label:'',type:'bool',side:'output'}
+      ]},
+      { id:'br', title:'Branch', style:'branch', x:430, y:40, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'cond',label:'Condition',type:'bool',side:'input'},
+        {id:'t',label:'True',type:'exec',side:'output'},
+        {id:'f',label:'False',type:'exec',side:'output'}
+      ]},
+      { id:'die', title:'Destroy Actor', style:'function', x:680, y:10, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'tgt',label:'Target',type:'object',side:'input',value:'Self'}
+      ]},
+      { id:'fx', title:'Play Sound at Location', style:'function', x:680, y:130, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'snd',label:'Sound',type:'object',side:'input',value:'SFX_LowHP'},
+        {id:'loc',label:'Location',type:'vector',side:'input'}
+      ]}
+    ],
+    wires: [
+      {from:{node:'tick',pin:'eo'},to:{node:'br',pin:'ei'}},
+      {from:{node:'gh',pin:'ret'},to:{node:'cmp',pin:'a'}},
+      {from:{node:'cmp',pin:'ret'},to:{node:'br',pin:'cond'}},
+      {from:{node:'br',pin:'t'},to:{node:'die',pin:'ei'}},
+      {from:{node:'br',pin:'f'},to:{node:'fx',pin:'ei'}}
+    ]
+  },
+  {
+    id: 'ex4', title: 'ForEach Loop \u2014 Apply Damage to All Overlapping', width: 950, height: 360,
+    nodes: [
+      { id:'evt', title:'On Component Begin Overlap', style:'event', x:10, y:40, pins:[
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'comp',label:'Overlapped Component',type:'object',side:'output'},
+        {id:'other',label:'Other Actor',type:'object',side:'output'},
+        {id:'ocomp',label:'Other Comp',type:'object',side:'output'}
+      ]},
+      { id:'getall', title:'Get Overlapping Actors', style:'function', x:10, y:230, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'arr',label:'Overlapping Actors',type:'array',side:'output'}
+      ]},
+      { id:'loop', title:'For Each Loop', style:'for-each', x:330, y:40, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'arr',label:'Array',type:'array',side:'input'},
+        {id:'body',label:'Loop Body',type:'exec',side:'output'},
+        {id:'elem',label:'Array Element',type:'object',side:'output'},
+        {id:'idx',label:'Array Index',type:'int',side:'output'},
+        {id:'done',label:'Completed',type:'exec',side:'output'}
+      ]},
+      { id:'dmg', title:'Apply Damage', style:'function', x:640, y:20, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'tgt',label:'Damaged Actor',type:'object',side:'input'},
+        {id:'amt',label:'Base Damage',type:'float',side:'input',value:'25.0'},
+        {id:'type',label:'Damage Type',type:'class',side:'input',value:'Fire'}
+      ]},
+      { id:'log', title:'Print String', style:'function', x:640, y:220, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'str',label:'In String',type:'string',side:'input',value:'Damage loop done'}
+      ]}
+    ],
+    wires: [
+      {from:{node:'evt',pin:'eo'},to:{node:'loop',pin:'ei'}},
+      {from:{node:'getall',pin:'arr'},to:{node:'loop',pin:'arr'}},
+      {from:{node:'loop',pin:'body'},to:{node:'dmg',pin:'ei'}},
+      {from:{node:'loop',pin:'elem'},to:{node:'dmg',pin:'tgt'}},
+      {from:{node:'loop',pin:'done'},to:{node:'log',pin:'ei'}}
+    ]
+  },
+  {
+    id: 'ex5', title: 'Cast & Interface \u2014 Player Interaction', width: 950, height: 380,
+    nodes: [
+      { id:'inp', title:'Input Action Interact', style:'event', x:10, y:50, pins:[
+        {id:'eo',label:'',type:'exec',side:'output'}
+      ]},
+      { id:'trace', title:'Line Trace by Channel', style:'function', x:10, y:170, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'start',label:'Start',type:'vector',side:'input'},
+        {id:'end',label:'End',type:'vector',side:'input'},
+        {id:'hit',label:'Out Hit',type:'struct',side:'output'},
+        {id:'ret',label:'Return Value',type:'bool',side:'output'}
+      ]},
+      { id:'brk', title:'Break Hit Result', style:'pure', x:290, y:230, pins:[
+        {id:'hit',label:'Hit Result',type:'struct',side:'input'},
+        {id:'actor',label:'Hit Actor',type:'object',side:'output'},
+        {id:'loc',label:'Location',type:'vector',side:'output'},
+        {id:'norm',label:'Normal',type:'vector',side:'output'}
+      ]},
+      { id:'cast', title:'Cast to BP_Interactable', style:'cast', x:520, y:50, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'obj',label:'Object',type:'object',side:'input'},
+        {id:'ok',label:'',type:'exec',side:'output'},
+        {id:'fail',label:'Cast Failed',type:'exec',side:'output'},
+        {id:'as',label:'As BP_Interactable',type:'object',side:'output'}
+      ]},
+      { id:'call', title:'Interact (Interface)', style:'function', x:760, y:40, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'tgt',label:'Target',type:'object',side:'input'},
+        {id:'who',label:'Interacting Actor',type:'object',side:'input',value:'Self'}
+      ]}
+    ],
+    wires: [
+      {from:{node:'inp',pin:'eo'},to:{node:'cast',pin:'ei'}},
+      {from:{node:'trace',pin:'hit'},to:{node:'brk',pin:'hit'}},
+      {from:{node:'brk',pin:'actor'},to:{node:'cast',pin:'obj'}},
+      {from:{node:'cast',pin:'ok'},to:{node:'call',pin:'ei'}},
+      {from:{node:'cast',pin:'as'},to:{node:'call',pin:'tgt'}}
+    ]
+  },
+  {
+    id: 'ex6', title: 'Replicated Variable \u2014 Sync Health to Clients', width: 880, height: 320,
+    nodes: [
+      { id:'dmg', title:'Event Any Damage', style:'event', x:10, y:40, pins:[
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'amt',label:'Damage',type:'float',side:'output'},
+        {id:'type',label:'Damage Type',type:'struct',side:'output'},
+        {id:'src',label:'Instigated By',type:'object',side:'output'}
+      ]},
+      { id:'sub', title:'Float - Float', style:'pure', x:50, y:200, pins:[
+        {id:'a',label:'A',type:'float',side:'input'},
+        {id:'b',label:'B',type:'float',side:'input'},
+        {id:'ret',label:'',type:'float',side:'output'}
+      ]},
+      { id:'clamp', title:'Clamp (Float)', style:'pure', x:290, y:200, pins:[
+        {id:'val',label:'Value',type:'float',side:'input'},
+        {id:'min',label:'Min',type:'float',side:'input',value:'0.0'},
+        {id:'max',label:'Max',type:'float',side:'input',value:'100.0'},
+        {id:'ret',label:'Return Value',type:'float',side:'output'}
+      ]},
+      { id:'set', title:'SET Health', subtitle:'Replicated', style:'variable-set', x:540, y:40, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'val',label:'Health',type:'float',side:'input'},
+        {id:'ret',label:'',type:'float',side:'output'}
+      ]},
+      { id:'rep', title:'OnRep_Health', style:'function', x:560, y:200, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'}
+      ]},
+      { id:'cmt', title:'Replicated with RepNotify \u2192 fires on clients', style:'comment', x:520, y:10, width:350, height:300 }
+    ],
+    wires: [
+      {from:{node:'dmg',pin:'eo'},to:{node:'set',pin:'ei'}},
+      {from:{node:'dmg',pin:'amt'},to:{node:'sub',pin:'b'}},
+      {from:{node:'sub',pin:'ret'},to:{node:'clamp',pin:'val'}},
+      {from:{node:'clamp',pin:'ret'},to:{node:'set',pin:'val'}}
+    ]
+  },
+  {
+    id: 'ex7', title: 'Timeline \u2014 Smooth Door Open/Close', width: 950, height: 360,
+    nodes: [
+      { id:'act', title:'Input Action Interact', style:'event', x:10, y:60, pins:[
+        {id:'eo',label:'',type:'exec',side:'output'}
+      ]},
+      { id:'flip', title:'Flip Flop', style:'macro', x:230, y:50, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'a',label:'A',type:'exec',side:'output'},
+        {id:'b',label:'B',type:'exec',side:'output'},
+        {id:'isA',label:'Is A',type:'bool',side:'output'}
+      ]},
+      { id:'play', title:'Play from Start', subtitle:'Door Timeline', style:'function', x:470, y:20, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'}
+      ]},
+      { id:'rev', title:'Reverse from End', subtitle:'Door Timeline', style:'function', x:470, y:130, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'}
+      ]},
+      { id:'tl', title:'Timeline \u2014 Door Curve', style:'function', x:700, y:60, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'Finished',type:'exec',side:'output'},
+        {id:'upd',label:'Update',type:'exec',side:'output'},
+        {id:'alpha',label:'Door Alpha',type:'float',side:'output'}
+      ]},
+      { id:'lerp', title:'Lerp (Rotator)', style:'pure', x:700, y:230, pins:[
+        {id:'a',label:'A',type:'rotator',side:'input',value:'0, 0, 0'},
+        {id:'b',label:'B',type:'rotator',side:'input',value:'0, 90, 0'},
+        {id:'alpha',label:'Alpha',type:'float',side:'input'},
+        {id:'ret',label:'Return Value',type:'rotator',side:'output'}
+      ]}
+    ],
+    wires: [
+      {from:{node:'act',pin:'eo'},to:{node:'flip',pin:'ei'}},
+      {from:{node:'flip',pin:'a'},to:{node:'play',pin:'ei'}},
+      {from:{node:'flip',pin:'b'},to:{node:'rev',pin:'ei'}},
+      {from:{node:'tl',pin:'alpha'},to:{node:'lerp',pin:'alpha'}}
+    ]
+  },
+  {
+    id: 'ex8', title: 'Create Widget \u2014 Show HUD on BeginPlay', width: 900, height: 300,
+    nodes: [
+      { id:'bp', title:'Event BeginPlay', style:'event', x:10, y:50, pins:[
+        {id:'eo',label:'',type:'exec',side:'output'}
+      ]},
+      { id:'getpc', title:'Get Player Controller', style:'pure', x:10, y:180, pins:[
+        {id:'idx',label:'Player Index',type:'int',side:'input',value:'0'},
+        {id:'ret',label:'Return Value',type:'object',side:'output'}
+      ]},
+      { id:'cw', title:'Create Widget', style:'function', x:260, y:30, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'cls',label:'Class',type:'class',side:'input',value:'WBP_HUD'},
+        {id:'own',label:'Owning Player',type:'object',side:'input'},
+        {id:'ret',label:'Return Value',type:'object',side:'output'}
+      ]},
+      { id:'add', title:'Add to Viewport', style:'function', x:560, y:30, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'tgt',label:'Target',type:'object',side:'input'},
+        {id:'z',label:'Z Order',type:'int',side:'input',value:'0'}
+      ]},
+      { id:'setv', title:'SET HUDWidgetRef', style:'variable-set', x:560, y:180, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'val',label:'',type:'object',side:'input'}
+      ]}
+    ],
+    wires: [
+      {from:{node:'bp',pin:'eo'},to:{node:'cw',pin:'ei'}},
+      {from:{node:'cw',pin:'eo'},to:{node:'add',pin:'ei'}},
+      {from:{node:'cw',pin:'ret'},to:{node:'add',pin:'tgt'}},
+      {from:{node:'cw',pin:'ret'},to:{node:'setv',pin:'val'}},
+      {from:{node:'getpc',pin:'ret'},to:{node:'cw',pin:'own'}}
+    ]
+  },
+  {
+    id: 'ex9', title: 'AI Perception \u2014 Detect and Chase Player', width: 1000, height: 340,
+    nodes: [
+      { id:'sense', title:'On Target Perception Updated', style:'event', x:10, y:50, pins:[
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'actor',label:'Actor',type:'object',side:'output'},
+        {id:'stim',label:'Stimulus',type:'struct',side:'output'}
+      ]},
+      { id:'sensed', title:'Was Successfully Sensed', style:'pure', x:20, y:220, pins:[
+        {id:'stim',label:'Stimulus',type:'struct',side:'input'},
+        {id:'ret',label:'Return Value',type:'bool',side:'output'}
+      ]},
+      { id:'br', title:'Branch', style:'branch', x:380, y:50, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'cond',label:'Condition',type:'bool',side:'input'},
+        {id:'t',label:'True',type:'exec',side:'output'},
+        {id:'f',label:'False',type:'exec',side:'output'}
+      ]},
+      { id:'setbb', title:'Set Value as Object', subtitle:'Blackboard', style:'function', x:620, y:20, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'key',label:'Key Name',type:'name',side:'input',value:'TargetActor'},
+        {id:'val',label:'Object Value',type:'object',side:'input'}
+      ]},
+      { id:'clearbb', title:'Clear Value', subtitle:'Blackboard', style:'function', x:620, y:180, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'key',label:'Key Name',type:'name',side:'input',value:'TargetActor'}
+      ]}
+    ],
+    wires: [
+      {from:{node:'sense',pin:'eo'},to:{node:'br',pin:'ei'}},
+      {from:{node:'sensed',pin:'ret'},to:{node:'br',pin:'cond'}},
+      {from:{node:'sense',pin:'stim'},to:{node:'sensed',pin:'stim'}},
+      {from:{node:'br',pin:'t'},to:{node:'setbb',pin:'ei'}},
+      {from:{node:'br',pin:'f'},to:{node:'clearbb',pin:'ei'}},
+      {from:{node:'sense',pin:'actor'},to:{node:'setbb',pin:'val'}}
+    ]
+  },
+  {
+    id: 'ex10', title: 'Custom Event \u2014 Apply Buff with Duration', width: 950, height: 360,
+    nodes: [
+      { id:'evt', title:'Apply Buff', subtitle:'Custom Event', style:'event', x:10, y:50, pins:[
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'type',label:'Buff Type',type:'enum',side:'output'},
+        {id:'dur',label:'Duration',type:'float',side:'output'},
+        {id:'mult',label:'Multiplier',type:'float',side:'output'}
+      ]},
+      { id:'sw', title:'Select', style:'select', x:280, y:140, pins:[
+        {id:'idx',label:'Index',type:'enum',side:'input'},
+        {id:'a',label:'Speed',type:'float',side:'input',value:'1.5'},
+        {id:'b',label:'Damage',type:'float',side:'input',value:'2.0'},
+        {id:'c',label:'Defense',type:'float',side:'input',value:'0.5'},
+        {id:'ret',label:'Return Value',type:'float',side:'output'}
+      ]},
+      { id:'mul', title:'Float * Float', style:'pure', x:510, y:210, pins:[
+        {id:'a',label:'A',type:'float',side:'input'},
+        {id:'b',label:'B',type:'float',side:'input'},
+        {id:'ret',label:'',type:'float',side:'output'}
+      ]},
+      { id:'timer', title:'Set Timer by Function Name', style:'function', x:510, y:30, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'fn',label:'Function Name',type:'name',side:'input',value:'RemoveBuff'},
+        {id:'time',label:'Time',type:'float',side:'input'},
+        {id:'loop',label:'Looping',type:'bool',side:'input',value:'false'},
+        {id:'ret',label:'Return Value',type:'struct',side:'output'}
+      ]},
+      { id:'setstat', title:'SET ActiveMultiplier', style:'variable-set', x:760, y:30, pins:[
+        {id:'ei',label:'',type:'exec',side:'input'},
+        {id:'eo',label:'',type:'exec',side:'output'},
+        {id:'val',label:'',type:'float',side:'input'}
+      ]}
+    ],
+    wires: [
+      {from:{node:'evt',pin:'eo'},to:{node:'timer',pin:'ei'}},
+      {from:{node:'timer',pin:'eo'},to:{node:'setstat',pin:'ei'}},
+      {from:{node:'evt',pin:'dur'},to:{node:'timer',pin:'time'}},
+      {from:{node:'evt',pin:'type'},to:{node:'sw',pin:'idx'}},
+      {from:{node:'evt',pin:'mult'},to:{node:'mul',pin:'b'}},
+      {from:{node:'sw',pin:'ret'},to:{node:'mul',pin:'a'}},
+      {from:{node:'mul',pin:'ret'},to:{node:'setstat',pin:'val'}}
+    ]
+  }
+];
+
+const container = document.getElementById('examples');
+examples.forEach(ex => {
+  const h = document.createElement('h2');
+  h.textContent = ex.title;
+  container.appendChild(h);
+  renderGraph(container, ex);
+});
+</script>
+</body>
+</html>

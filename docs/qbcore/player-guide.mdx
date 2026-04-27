@@ -1,0 +1,130 @@
+---
+title: "QBCore Player Guide"
+sidebar_position: 3
+---
+
+# QBCore Player Guide
+
+This guide covers the core systems you'll interact with when building on QBCore: player management, character creation, jobs, and money. All examples are in Lua since QBCore is a Lua-based framework.
+
+## Player Object
+
+Every connected player has a **Player object** that holds their data. On the server, you retrieve it like this:
+
+```lua
+-- Get a player by their server ID
+local Player = QBCore.Functions.GetPlayer(source)
+
+-- Access player data
+local name = Player.PlayerData.charinfo.firstname
+local job = Player.PlayerData.job.name
+local cash = Player.PlayerData.money.cash
+```
+
+The Player object is your gateway to everything about that character -- their job, money, inventory, metadata, and more.
+
+## Character Creation
+
+QBCore supports **multi-character** setups. Each player account can have multiple characters, each with their own data. When a player connects, they pick or create a character before spawning.
+
+Character info is stored in `PlayerData.charinfo`:
+
+```lua
+-- charinfo structure
+{
+    firstname = "John",
+    lastname = "Doe",
+    birthdate = "1990-01-15",
+    gender = 0,          -- 0 = male, 1 = female
+    nationality = "American",
+    phone = "555-0123",
+    account = "HLX-28491"
+}
+```
+
+To update character info from the server:
+
+```lua
+local Player = QBCore.Functions.GetPlayer(source)
+Player.Functions.SetCharInfo("phone", "555-9999")
+```
+
+## Jobs System
+
+Jobs define what a character does and what permissions they have. Each job has a **name**, a **label**, and one or more **grades**.
+
+```lua
+-- Check a player's current job
+local Player = QBCore.Functions.GetPlayer(source)
+local jobName = Player.PlayerData.job.name       -- "police"
+local jobGrade = Player.PlayerData.job.grade.level -- 3
+local onDuty = Player.PlayerData.job.onduty       -- true/false
+
+-- Set a player's job
+Player.Functions.SetJob("police", 3)  -- job name, grade level
+
+-- Toggle duty status
+Player.Functions.SetJobDuty(not onDuty)
+```
+
+Jobs are defined in the shared data file (`shared/jobs.lua`). Here's what a job definition looks like:
+
+```lua
+QBCore.Shared.Jobs = {
+    police = {
+        label = "Law Enforcement",
+        type = "leo",
+        defaultDuty = false,
+        grades = {
+            [0] = { name = "cadet",     payment = 1500 },
+            [1] = { name = "officer",   payment = 2000 },
+            [2] = { name = "sergeant",  payment = 2500 },
+            [3] = { name = "lieutenant", payment = 3000 },
+            [4] = { name = "chief",     payment = 4000 },
+        },
+    },
+}
+```
+
+## Money System
+
+QBCore supports multiple money types. By default, players have **cash**, **bank**, and optionally **crypto** balances.
+
+```lua
+local Player = QBCore.Functions.GetPlayer(source)
+
+-- Check balances
+local cash = Player.PlayerData.money.cash
+local bank = Player.PlayerData.money.bank
+
+-- Add money
+Player.Functions.AddMoney("cash", 500, "sold-vehicle")
+Player.Functions.AddMoney("bank", 1000, "paycheck")
+
+-- Remove money
+Player.Functions.RemoveMoney("cash", 200, "purchased-item")
+
+-- Transfer between types
+Player.Functions.RemoveMoney("cash", 1000, "deposit")
+Player.Functions.AddMoney("bank", 1000, "deposit")
+```
+
+The last argument is a **reason string** that gets logged for transaction history. Always include a descriptive reason -- it makes debugging and auditing much easier.
+
+## Player Metadata
+
+Metadata stores extra information about a character that doesn't fit into the standard fields -- things like hunger, thirst, stress, and custom values.
+
+```lua
+local Player = QBCore.Functions.GetPlayer(source)
+
+-- Get metadata
+local hunger = Player.PlayerData.metadata.hunger
+local stress = Player.PlayerData.metadata.stress
+
+-- Set metadata
+Player.Functions.SetMetaData("hunger", 80)
+Player.Functions.SetMetaData("stress", 10)
+```
+
+All player data (including metadata) is automatically saved to the database at regular intervals and on disconnect. You don't need to handle persistence manually.

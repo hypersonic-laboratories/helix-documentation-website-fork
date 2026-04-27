@@ -1,0 +1,142 @@
+---
+title: "Coming from Roblox"
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Coming from Roblox
+
+If you've been building experiences on Roblox, HELIX will feel familiar in many ways -- but with the full power of Unreal Engine 5 under the hood. Here's how the two platforms compare and what you need to know to make the switch.
+
+## Platform Comparison
+
+| | Roblox | HELIX |
+|---|---|---|
+| **Engine** | Proprietary (Roblox Engine) | Unreal Engine 5 |
+| **Editor** | Roblox Studio | HELIX Studio (UE5-based) |
+| **Scripting** | Luau | Lua, Blueprint, JavaScript |
+| **Object Model** | Instance-based hierarchy | Actor / Component model |
+| **Networking** | Automatic replication | Server-authoritative events |
+| **Monetization** | Robux / DevEx | LIX (built-in economy) |
+| **Target Audience** | All ages | Flexible -- you set the tone |
+
+## Roblox Studio vs HELIX Studio
+
+Roblox Studio's Explorer panel and Properties window have equivalents in HELIX Studio. The **World Outliner** is your Explorer, and the **Details Panel** is your Properties window. Instead of inserting Parts and Models, you work with **Actors** and **Components**.
+
+The big upgrade: HELIX Studio gives you access to Nanite (virtualized geometry), Lumen (global illumination), and the full UE5 material editor. Your worlds can look dramatically better without sacrificing performance.
+
+## Luau vs Lua
+
+Roblox uses Luau, a typed superset of Lua. HELIX uses standard Lua 5.4. Most of your Lua knowledge transfers directly, but there are a few differences:
+
+| Roblox (Luau) | HELIX (Lua) |
+|---|---|
+| `local part = Instance.new("Part")` | `local actor = StaticMesh(Vector(), Rotator(), "mesh-path")` |
+| `part.Position = Vector3.new(0, 10, 0)` | `actor:SetLocation(Vector(0, 10, 0))` |
+| `part:Destroy()` | `actor:Destroy()` |
+| `game.Players.LocalPlayer` | `Client.GetLocalPlayer()` |
+| `wait(1)` | [`Timer.SetTimeout(callback, 1000)`](/api/classes/timer) |
+| Type annotations (`string`, `number`) | Standard Lua types (no built-in type checking) |
+
+:::note
+Luau's strict type system doesn't carry over. If you rely heavily on type annotations, consider using a Lua linter in your workflow.
+:::
+
+## RemoteEvents vs HELIX Events
+
+Roblox's `RemoteEvent` and `RemoteFunction` system maps to HELIX's [Events](/api/classes/events) API:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Client-server communication in Blueprint"
+  nodes={[
+    { id:'evt', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'call', title:'Call Remote Event', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'name',label:'Event Name',type:'string',side:'input',value:'"MyEvent"'},
+      {id:'data',label:'Data',type:'wildcard',side:'input'}
+    ]},
+    { id:'sub', title:'Subscribe to Remote Event', style:'event', x:300, y:180, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'name',label:'Event Name',type:'string',side:'input',value:'"MyEvent"'},
+      {id:'data',label:'Data',type:'wildcard',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'evt',pin:'eo'},to:{node:'call',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Roblox: Fire server from client
+remoteEvent:FireServer(data)
+
+-- HELIX: Fire server from client
+TriggerServerEvent('MyEvent', data)
+
+-- Roblox: Listen on server
+remoteEvent.OnServerEvent:Connect(function(player, data) end)
+
+-- HELIX: Listen on server (controller passed as first arg)
+RegisterServerEvent('MyEvent', function(controller, data) end)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// HELIX JS uses an endpoint/call model for client-server communication
+
+// Server: register an endpoint
+Helix.server(async () => {
+    Helix.endpoint('MyEvent', async (helixId, data) => {
+        // handle the request
+        return { success: true };
+    });
+});
+
+// Client: call the endpoint
+const id = Helix.Player.helixId();
+const result = await Helix.call('MyEvent', id.toString(), data);
+```
+
+</TabItem>
+</Tabs>
+
+No need to create RemoteEvent instances in a folder hierarchy. You call events by name and subscribe by name -- that's it.
+
+## DataStores vs Database
+
+Roblox's `DataStoreService` is replaced by HELIX's built-in [**Database**](/api/classes/database) API. You get direct access to a persistent database without the request limits and throttling that Roblox imposes.
+
+| Roblox | HELIX |
+|---|---|
+| `DataStoreService:GetDataStore("name")` | [`Database.Execute("CREATE TABLE ...")`](/api/classes/database) |
+| `dataStore:SetAsync(key, value)` | `Database.Execute("INSERT INTO ... VALUES ...")` |
+| `dataStore:GetAsync(key)` | `Database.Execute("SELECT ... WHERE ...")` |
+| 60 req/min + 6s cooldowns | No artificial rate limits -- direct SQL access |
+
+## Roblox Economy vs LIX
+
+Instead of Robux and the Developer Exchange program, HELIX uses **LIX** -- the platform's built-in currency. Players earn and spend LIX across experiences, and creators receive LIX directly based on engagement and in-experience purchases. No need for third-party gamepass workarounds.
+
+## Getting Started
+
+1. **Download HELIX** and open HELIX Studio
+2. **Create a new world** -- think of this as your Roblox "Place"
+3. **Add a script package** to start writing Lua (it's close to what you already know)
+4. **Replace Instance.new** calls with HELIX Actor constructors
+5. **Swap RemoteEvents** for [`TriggerServerEvent`](/api/classes/events) / `RegisterServerEvent` / `RegisterClientEvent`
+6. **Test with friends** using the built-in multiplayer testing tools

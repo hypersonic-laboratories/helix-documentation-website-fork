@@ -1,0 +1,193 @@
+/* Hero */
+.hero {
+  padding: 80px 0 60px;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 0%, rgba(102, 84, 241, 0.12) 0%, transparent 60%);
+}
+
+.heroTitle {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.heroSubtitle {
+  font-size: 1.4rem;
+  font-family: 'Tomorrow', sans-serif;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
+.heroDescription {
+  font-size: 1.1rem;
+  opacity: 0.7;
+  max-width: 600px;
+  margin: 0 auto 32px;
+}
+
+.heroButtons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.heroButtons .button--primary {
+  background: linear-gradient(135deg, #04ffd1, #0ad4b0);
+  border: none;
+  color: #0a0a0a;
+}
+
+.heroButtons .button--primary:hover {
+  background: linear-gradient(135deg, #00e6bc, #04ffd1);
+  color: #0a0a0a;
+}
+
+.heroButtons .button--outline {
+  border-color: rgba(139, 124, 246, 0.4);
+  color: #c4b5fd;
+}
+
+.heroButtons .button--outline:hover {
+  background: rgba(102, 84, 241, 0.1);
+  border-color: rgba(139, 124, 246, 0.6);
+  color: #ddd6fe;
+}
+
+/* Sections */
+.section {
+  padding: 60px 0;
+}
+
+.sectionAlt {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.sectionTitle {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.sectionSubtitle {
+  text-align: center;
+  opacity: 0.7;
+  margin-bottom: 40px;
+}
+
+/* Path cards */
+.pathGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.pathCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s ease;
+}
+
+.pathCard:hover {
+  border-color: rgba(102, 84, 241, 0.3);
+  background: rgba(102, 84, 241, 0.05);
+  transform: translateY(-2px);
+}
+
+.pathCardEmoji {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.pathCard h3 {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+}
+
+.pathCard p {
+  opacity: 0.7;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
+.pathCard a {
+  font-family: 'Tomorrow', sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Feature cards */
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.featureCard {
+  padding: 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.featureCard h3 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.featureCard p {
+  opacity: 0.7;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Quick links */
+.quickLinksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.quickLink {
+  display: block;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.quickLink:hover {
+  border-color: rgba(102, 84, 241, 0.3);
+  background: rgba(102, 84, 241, 0.05);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.quickLink strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 1.05rem;
+}
+
+.quickLink span {
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1.1rem;
+  }
+
+  .section {
+    padding: 40px 0;
+  }
+}

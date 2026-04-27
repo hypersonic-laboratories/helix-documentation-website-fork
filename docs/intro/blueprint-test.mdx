@@ -1,0 +1,173 @@
+---
+title: "Blueprint Renderer Test"
+sidebar_position: 99
+---
+
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Blueprint Renderer Test
+
+This page tests the Blueprint visual renderer.
+
+## Example 1: BeginPlay → Print String
+
+<BlueprintGraph
+  title="Hello World"
+  width={650}
+  height={220}
+  nodes={[
+    {
+      id: "beginplay",
+      title: "Event BeginPlay",
+      style: "event",
+      x: 30,
+      y: 50,
+      pins: [
+        { id: "exec_out", label: "", type: "exec", side: "output" }
+      ]
+    },
+    {
+      id: "print",
+      title: "Print String",
+      style: "function",
+      x: 320,
+      y: 30,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "string", label: "In String", type: "string", side: "input", value: "Hello HELIX!" },
+        { id: "color", label: "Text Color", type: "struct", side: "input", value: "Cyan" },
+        { id: "duration", label: "Duration", type: "float", side: "input", value: "2.0" }
+      ]
+    }
+  ]}
+  wires={[
+    { from: { node: "beginplay", pin: "exec_out" }, to: { node: "print", pin: "exec_in" } }
+  ]}
+/>
+
+## Example 2: Spawn Actor on Key Press
+
+<BlueprintGraph
+  title="Spawn Actor on Key Press"
+  width={850}
+  height={320}
+  nodes={[
+    {
+      id: "input",
+      title: "Input Action Fire",
+      style: "event",
+      x: 20,
+      y: 60,
+      pins: [
+        { id: "exec_out", label: "Pressed", type: "exec", side: "output" },
+        { id: "key", label: "Key", type: "struct", side: "output" }
+      ]
+    },
+    {
+      id: "getloc",
+      title: "Get Actor Location",
+      style: "pure",
+      x: 250,
+      y: 170,
+      pins: [
+        { id: "target", label: "Target", type: "object", side: "input" },
+        { id: "return", label: "Return Value", type: "vector", side: "output" }
+      ]
+    },
+    {
+      id: "spawn",
+      title: "Spawn Actor from Class",
+      style: "function",
+      x: 500,
+      y: 40,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "class", label: "Class", type: "class", side: "input", value: "BP_Projectile" },
+        { id: "transform", label: "Spawn Transform", type: "struct", side: "input" },
+        { id: "owner", label: "Owner", type: "object", side: "input" },
+        { id: "return", label: "Return Value", type: "object", side: "output" }
+      ]
+    }
+  ]}
+  wires={[
+    { from: { node: "input", pin: "exec_out" }, to: { node: "spawn", pin: "exec_in" } },
+    { from: { node: "getloc", pin: "return" }, to: { node: "spawn", pin: "transform" } }
+  ]}
+/>
+
+## Example 3: Branch with Condition
+
+<BlueprintGraph
+  title="Health Check"
+  width={800}
+  height={300}
+  nodes={[
+    {
+      id: "tick",
+      title: "Event Tick",
+      style: "event",
+      x: 20,
+      y: 50,
+      pins: [
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "delta", label: "Delta Seconds", type: "float", side: "output" }
+      ]
+    },
+    {
+      id: "getHealth",
+      title: "Get Health",
+      style: "pure",
+      x: 60,
+      y: 180,
+      pins: [
+        { id: "target", label: "Target", type: "object", side: "input" },
+        { id: "return", label: "Return Value", type: "float", side: "output" }
+      ]
+    },
+    {
+      id: "compare",
+      title: "Float <= Float",
+      subtitle: "",
+      style: "pure",
+      x: 260,
+      y: 180,
+      pins: [
+        { id: "a", label: "A", type: "float", side: "input" },
+        { id: "b", label: "B", type: "float", side: "input", value: "0.0" },
+        { id: "return", label: "Return Value", type: "bool", side: "output" }
+      ]
+    },
+    {
+      id: "branch",
+      title: "Branch",
+      style: "branch",
+      x: 460,
+      y: 50,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "condition", label: "Condition", type: "bool", side: "input" },
+        { id: "true", label: "True", type: "exec", side: "output" },
+        { id: "false", label: "False", type: "exec", side: "output" }
+      ]
+    },
+    {
+      id: "destroy",
+      title: "Destroy Actor",
+      style: "function",
+      x: 650,
+      y: 30,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "target", label: "Target", type: "object", side: "input" }
+      ]
+    }
+  ]}
+  wires={[
+    { from: { node: "tick", pin: "exec_out" }, to: { node: "branch", pin: "exec_in" } },
+    { from: { node: "getHealth", pin: "return" }, to: { node: "compare", pin: "a" } },
+    { from: { node: "compare", pin: "return" }, to: { node: "branch", pin: "condition" } },
+    { from: { node: "branch", pin: "true" }, to: { node: "destroy", pin: "exec_in" } }
+  ]}
+/>

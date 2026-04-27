@@ -1,0 +1,92 @@
+---
+title: "Input"
+sidebar_position: 7
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Input
+
+The **Input** class provides a way to listen for key events such as presses or releases. You can bind custom functions to specific keys, allowing for flexible input handling.
+
+**Authority:** Client -- All input methods are client-side only.
+
+:::tip
+- When using a key to set input mode, the key "released" event will automatically trigger.
+- For example, binding a pressed key to open a WebUI will cause its "released" counterpart to trigger when you use `SetInputMode(1)`.
+:::
+
+---
+
+## Methods
+
+| Method | Parameters | Return Type | Authority | Description |
+|---|---|---|---|---|
+| `Input.BindKey` | `Key: string`, `Callback: function`, `ListenerType?: string` | `void` | **Client** | Binds a function to an event listener type for a specific key. `ListenerType` defaults to `"Pressed"`. Can also be `"Released"`. |
+
+---
+
+## Examples
+
+### Binding Key Events
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Bind Key Press and Release Events"
+  nodes={[
+    { id:'pressed', title:'Input Action Tab', style:'event', x:30, y:30, pins:[
+      {id:'eo_p',label:'Pressed',type:'exec',side:'output'},
+      {id:'eo_r',label:'Released',type:'exec',side:'output'}
+    ]},
+    { id:'ps1', title:'Print String', style:'function', x:330, y:10, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Tab Pressed"'}
+    ]},
+    { id:'ps2', title:'Print String', style:'function', x:330, y:150, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Tab Released"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'pressed',pin:'eo_p'},to:{node:'ps1',pin:'ei'}},
+    {from:{node:'pressed',pin:'eo_r'},to:{node:'ps2',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Bind to Tab key press
+Input.BindKey('Tab', function()
+    print('Tab Pressed')
+end, 'Pressed')
+
+-- Bind to Tab key release
+Input.BindKey('Tab', function()
+    print('Tab Released')
+end, 'Released')
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+:::note
+Input bindings persist until the client disconnects. If you bind actions in a temporary game mode, remember to manage your bindings appropriately when the mode ends.
+:::

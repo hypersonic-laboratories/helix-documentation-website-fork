@@ -1,14 +1,41 @@
-<div align="center">
+# Website
 
-# HELIX Documentation
+This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
-[![Edit in VSCode](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Edit%20in%20Visual%20Studio%20Code&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://open.vscode.dev/hypersonic-laboratories/helix-documentation) [![Site Development](https://img.shields.io/static/v1?logo=cloudflarepages&label=&message=Live%20Site%20(Development)&labelColor=grey)](https://development.helix-documentation.pages.dev/) [![Site (Production)](https://img.shields.io/static/v1?logo=cloudflarepages&label=&message=Live%20Site%20(Production)&color=teal&labelColor=grey)](https://helix-documentation.pages.dev/)
+## Installation
 
-![Logo](/docs/_images/getting_started/banner.png)
+```bash
+yarn
+```
 
-</div>
+## Local Development
 
-Welcome to the official source for [HELIX](https://helixgame.com/)'s documentation!
+```bash
+yarn start
+```
 
-- Please check out the [contribution](CONTRIBUTING.md) document if you are interested in helping out - *PR's welcome!*
-- Live documentation here: [development](https://development.helix-documentation.pages.dev/) & [production](https://helix-documentation.pages.dev/)
+This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+
+## Build
+
+```bash
+yarn build
+```
+
+This command generates static content into the `build` directory and can be served using any static contents hosting service.
+
+## Deployment
+
+Using SSH:
+
+```bash
+USE_SSH=true yarn deploy
+```
+
+Not using SSH:
+
+```bash
+GIT_USER=<Your GitHub username> yarn deploy
+```
+
+If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.

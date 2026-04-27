@@ -1,0 +1,261 @@
+---
+title: "Replication"
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Replication
+
+Replication is how HELIX keeps everyone in sync. When the server changes something -- moves an actor, updates a health value, spawns a new object -- replication is the system that pushes those changes out to all connected clients.
+
+## Actor Replication
+
+Before an actor can be seen or interacted with by clients, it needs to be set up for replication. This tells the engine "hey, this thing exists on the network, keep clients informed about it."
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Enable Actor Replication"
+  width={750}
+  height={260}
+  nodes={[
+    {
+      id: "beginplay",
+      title: "Event BeginPlay",
+      style: "event",
+      x: 20,
+      y: 50,
+      pins: [
+        { id: "exec_out", label: "", type: "exec", side: "output" }
+      ]
+    },
+    {
+      id: "setrep",
+      title: "Set Replicates",
+      style: "function",
+      x: 280,
+      y: 40,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "target", label: "Target", type: "object", side: "input", value: "Self" },
+        { id: "replicate", label: "Replicates", type: "bool", side: "input", value: "true" }
+      ]
+    },
+    {
+      id: "setmove",
+      title: "Set Replicate Movement",
+      style: "function",
+      x: 530,
+      y: 40,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "target", label: "Target", type: "object", side: "input", value: "Self" },
+        { id: "replicate", label: "Replicate Movement", type: "bool", side: "input", value: "true" }
+      ]
+    }
+  ]}
+  wires={[
+    { from: { node: "beginplay", pin: "exec_out" }, to: { node: "setrep", pin: "exec_in" } },
+    { from: { node: "setrep", pin: "exec_out" }, to: { node: "setmove", pin: "exec_in" } }
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Enable replication on an actor
+my_actor:SetReplicates(true)
+my_actor:SetReplicateMovement(true)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Enable replication on an actor
+myActor.SetReplicates(true);
+myActor.SetReplicateMovement(true);
+```
+
+</TabItem>
+</Tabs>
+
+`SetReplicates(true)` makes the actor network-visible. `SetReplicateMovement(true)` automatically syncs position, rotation, and velocity -- so you don't need to send those manually.
+
+## Replicated Variables
+
+Sometimes you need to sync specific data, like a player's health or a door's open/closed state. That's where **replicated variables** come in.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Replicated Variable with OnRep"
+  width={800}
+  height={300}
+  nodes={[
+    {
+      id: "sethealth",
+      title: "SET Health",
+      style: "variable-set",
+      x: 20,
+      y: 50,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "value", label: "Health", type: "float", side: "input", value: "100.0" },
+        { id: "output", label: "", type: "float", side: "output" }
+      ]
+    },
+    {
+      id: "comment",
+      title: "Mark Health as Replicated + RepNotify in the variable Details panel",
+      style: "comment",
+      x: 10,
+      y: 170,
+      pins: []
+    },
+    {
+      id: "onrep",
+      title: "On Rep Health",
+      style: "event",
+      x: 400,
+      y: 50,
+      pins: [
+        { id: "exec_out", label: "", type: "exec", side: "output" }
+      ]
+    },
+    {
+      id: "updatehud",
+      title: "Update Health Bar",
+      style: "function",
+      x: 610,
+      y: 40,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "health", label: "New Health", type: "float", side: "input" }
+      ]
+    }
+  ]}
+  wires={[
+    { from: { node: "onrep", pin: "exec_out" }, to: { node: "updatehud", pin: "exec_in" } },
+    { from: { node: "sethealth", pin: "output" }, to: { node: "updatehud", pin: "health" } }
+  ]}
+/>
+
+In Blueprints, you set a variable to **Replicated** or **RepNotify** in the variable's Details panel (right side). When you choose RepNotify, the engine auto-generates an `OnRep_` function you can implement to react to changes on clients.
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Store a custom value on the server (available on HPlayer)
+my_player:SetValue("Health", 100.0)
+
+-- Retrieve the value
+local health = my_player:GetValue("Health")
+print("Health: " .. tostring(health))
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript uses the endpoint/call model for server data.
+// Use Helix.endpoint() to expose state and Helix.call() to retrieve it.
+Helix.server(async () => {
+    Helix.endpoint('getHealth', async (helixId) => {
+        return { health: playerHealth[helixId] };
+    });
+});
+```
+
+</TabItem>
+</Tabs>
+
+The `ReplicatedUsing` / callback pattern is especially useful -- it lets you react to changes on the client side, like updating a health bar when the value arrives.
+
+## Relevancy
+
+Not every client needs to know about every actor. A player on the east side of your map doesn't need updates about a crate on the west side. **Relevancy** controls which actors replicate to which clients based on factors like:
+
+- **Distance** -- Actors too far away stop replicating.
+- **Net Cull Distance** -- You can set a custom cutoff distance per actor.
+- **Always Relevant** -- Force an actor to replicate to everyone (use sparingly -- it's expensive on bandwidth).
+
+Setting a net cull distance is straightforward:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Set Net Cull Distance"
+  width={600}
+  height={220}
+  nodes={[
+    {
+      id: "beginplay",
+      title: "Event BeginPlay",
+      style: "event",
+      x: 20,
+      y: 50,
+      pins: [
+        { id: "exec_out", label: "", type: "exec", side: "output" }
+      ]
+    },
+    {
+      id: "setcull",
+      title: "Set Net Cull Distance Squared",
+      style: "function",
+      x: 280,
+      y: 40,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "target", label: "Target", type: "object", side: "input", value: "Self" },
+        { id: "distance", label: "Distance Squared", type: "float", side: "input", value: "225000000.0" }
+      ]
+    }
+  ]}
+  wires={[
+    { from: { node: "beginplay", pin: "exec_out" }, to: { node: "setcull", pin: "exec_in" } }
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Set the maximum relevancy distance
+my_actor.NetCullDistanceSquared = 225000000.0
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Set the maximum relevancy distance
+myActor.NetCullDistanceSquared = 225000000.0;
+```
+
+</TabItem>
+</Tabs>
+
+## Network Conditions
+
+Keep in mind that real networks have latency, packet loss, and bandwidth limits. A few tips:
+
+- **Don't replicate every frame.** Only sync values when they actually change.
+- **Use quantization.** Rotations and positions can be compressed to save bandwidth.
+- **Batch updates.** Group related changes together instead of sending them one at a time.
+- **Prioritize.** Actors closer to the player should get updates more frequently than distant ones.
+
+For more on how to send targeted messages between client and server, head over to [Remote Calls](./remote-calls.mdx).

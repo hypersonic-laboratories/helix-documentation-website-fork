@@ -1,0 +1,101 @@
+---
+title: "Coming from RageMP"
+sidebar_position: 3
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Coming from RageMP
+
+If you've been developing on RageMP, the transition to HELIX is straightforward. Both platforms focus on multiplayer game servers, but HELIX runs on Unreal Engine 5 instead of GTA V's RAGE engine, giving you far more creative freedom.
+
+## Key Differences
+
+| | RageMP | HELIX |
+|---|---|---|
+| **Engine** | Modified RAGE (GTA V) | Unreal Engine 5 |
+| **Scripting** | JavaScript, C# | Lua, Blueprint, JavaScript |
+| **World Building** | GTA V map + MLOs | Full UE5 editor (HELIX Studio) |
+| **Hosting** | Self-hosted only | Instant Hosting or self-hosted |
+| **Client Mods** | Limited to GTA V assets | Custom assets, Nanite meshes, full UE5 pipeline |
+
+## API Comparison
+
+| RageMP | HELIX | Notes |
+|---|---|---|
+| `mp.events.add('event', cb)` | [`RegisterServerEvent('event', cb)`](/api/classes/events) | Server event subscription |
+| `mp.events.callRemote('event', data)` | `TriggerServerEvent('event', data)` | Client-to-server |
+| `player.position = new mp.Vector3(x,y,z)` | `character:SetLocation(Vector(x,y,z))` | Set position |
+| `player.kick(reason)` | `player:Kick(reason)` | Kick a player |
+| `mp.vehicles.new(model, pos)` | [`Vehicle(pos, rot, "asset-path")`](/api/classes/vehicle) | Spawn a vehicle |
+| `player.spawn(pos)` | `character:SetLocation(pos)` | Spawn/teleport |
+| `entity.destroy()` | `actor:Destroy()` | Remove an entity |
+
+## Events
+
+RageMP's event system maps almost 1:1 to HELIX events:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Networked events in Blueprint"
+  nodes={[
+    { id:'sub', title:'Subscribe to Remote Event', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'name',label:'Event Name',type:'string',side:'input',value:'"playerReady"'},
+      {id:'data',label:'Data',type:'wildcard',side:'output'}
+    ]},
+    { id:'call', title:'Call Remote Event', style:'function', x:30, y:200, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'name',label:'Event Name',type:'string',side:'input',value:'"requestData"'},
+      {id:'data',label:'Data',type:'wildcard',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'sub',pin:'eo'},to:{node:'call',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Subscribe to a server event (controller passed as first arg)
+RegisterServerEvent('playerReady', function(controller)
+    -- player connected and is ready
+end)
+
+-- Call from client to server
+TriggerServerEvent('requestData', someValue)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// HELIX JS uses an endpoint/call model
+Helix.server(async () => {
+    Helix.endpoint('requestData', async (helixId, someValue) => {
+        // handle the request
+        return { data: someValue };
+    });
+});
+
+// Client: call the endpoint
+const result = await Helix.call('requestData', id, someValue);
+```
+
+</TabItem>
+</Tabs>
+
+## Getting Started
+
+1. **Download HELIX** and open HELIX Studio
+2. **Create a new package** -- this replaces your RageMP resource
+3. **Port your scripts** using the API table above (the event model is very similar)
+4. **Build your world** in the UE5 editor instead of relying on GTA V's map
+5. **Deploy** via Instant Hosting or on your own server

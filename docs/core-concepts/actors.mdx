@@ -1,0 +1,191 @@
+---
+title: Actors
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Actors
+
+If a Level is a movie set, then **Actors** are the props, people, lights, and cameras on that set. Every object you place in a HELIX world is an Actor. That chair? Actor. That streetlight? Actor. That invisible trigger zone that opens a door? Also an Actor.
+
+`AActor` is the base class for everything that exists in a Level.
+
+## Common Actor Types
+
+| Type | What it does |
+|------|-------------|
+| **Static Mesh Actor** | A 3D model that doesn't move (walls, rocks, furniture) |
+| [**Character**](/api/classes/character) | A movable, controllable entity (players, NPCs) |
+| [**Light**](/api/classes/light) | Point lights, spotlights, directional lights |
+| **Camera** | Viewpoints for players or cutscenes |
+| [**Trigger Volume**](/api/classes/trigger) | Invisible boxes that fire events when something enters them |
+| **Player Start** | Where players spawn into the world |
+
+## Spawning an Actor
+
+You can place Actors in HELIX Studio by dragging them into the viewport, but you can also spawn them at runtime through code:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Spawn Actor at Runtime"
+  width={800}
+  height={300}
+  nodes={[
+    {
+      id: "beginplay",
+      title: "Event BeginPlay",
+      style: "event",
+      x: 20,
+      y: 60,
+      pins: [
+        { id: "exec_out", label: "", type: "exec", side: "output" }
+      ]
+    },
+    {
+      id: "maketransform",
+      title: "Make Transform",
+      style: "pure",
+      x: 220,
+      y: 140,
+      pins: [
+        { id: "location", label: "Location", type: "vector", side: "input", value: "100, 200, 50" },
+        { id: "rotation", label: "Rotation", type: "rotator", side: "input", value: "0, 0, 0" },
+        { id: "scale", label: "Scale", type: "vector", side: "input", value: "1, 1, 1" },
+        { id: "return", label: "Return Value", type: "transform", side: "output" }
+      ]
+    },
+    {
+      id: "spawn",
+      title: "Spawn Actor from Class",
+      style: "function",
+      x: 480,
+      y: 40,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "class", label: "Class", type: "class", side: "input", value: "BP_MyActor" },
+        { id: "transform", label: "Spawn Transform", type: "transform", side: "input" },
+        { id: "collision", label: "Collision Handling", type: "enum", side: "input", value: "Always Spawn" },
+        { id: "return", label: "Return Value", type: "object", side: "output" }
+      ]
+    }
+  ]}
+  wires={[
+    { from: { node: "beginplay", pin: "exec_out" }, to: { node: "spawn", pin: "exec_in" } },
+    { from: { node: "maketransform", pin: "return" }, to: { node: "spawn", pin: "transform" } }
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Spawn an actor at a specific location
+local MyClass = LoadClass("/Game/Blueprints/MyActor.MyActor_C")
+
+local spawn_transform = Transform()
+spawn_transform.Translation = Vector(100, 200, 50)
+spawn_transform.Rotation = Rotator(0, 0, 0):ToQuat()
+spawn_transform.Scale3D = Vector(1, 1, 1)
+
+local new_actor = HWorld:SpawnActor(
+    MyClass,
+    spawn_transform,
+    ESpawnActorCollisionHandlingMethod.AlwaysSpawn
+)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Spawn an actor at a specific location
+// Note: Actor spawning in JavaScript follows similar patterns to Lua.
+// Use the HWorld global and SpawnActor method:
+const MyClass = LoadClass("/Game/Blueprints/MyActor.MyActor_C");
+
+let spawnTransform = new Transform();
+spawnTransform.Translation = new Vector(100, 200, 50);
+spawnTransform.Rotation = new Rotator(0, 0, 0).ToQuat();
+spawnTransform.Scale3D = new Vector(1, 1, 1);
+
+let newActor = HWorld.SpawnActor(
+    MyClass,
+    spawnTransform,
+    ESpawnActorCollisionHandlingMethod.AlwaysSpawn
+);
+```
+
+</TabItem>
+</Tabs>
+
+## Destroying Actors
+
+When you're done with an Actor (a projectile that hit something, a pickup that was collected), destroy it to free up memory:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Destroy Actor"
+  width={550}
+  height={200}
+  nodes={[
+    {
+      id: "event",
+      title: "Event Any Damage",
+      style: "event",
+      x: 20,
+      y: 40,
+      pins: [
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "damage", label: "Damage", type: "float", side: "output" }
+      ]
+    },
+    {
+      id: "destroy",
+      title: "Destroy Actor",
+      style: "function",
+      x: 320,
+      y: 30,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "target", label: "Target", type: "object", side: "input", value: "Self" }
+      ]
+    }
+  ]}
+  wires={[
+    { from: { node: "event", pin: "exec_out" }, to: { node: "destroy", pin: "exec_in" } }
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+actor_to_destroy:K2_DestroyActor()
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+actorToDestroy.K2_DestroyActor();
+```
+
+</TabItem>
+</Tabs>
+
+## Finding Actors
+
+Need to grab a reference to an Actor already in the world? You can find them by class, by tag, or by name using `GetAllActorsOfClass`, `GetAllActorsWithTag`, or by storing a reference in a variable.
+
+:::tip
+Avoid searching for actors every frame. Grab your references once in **BeginPlay** and store them in variables.
+:::

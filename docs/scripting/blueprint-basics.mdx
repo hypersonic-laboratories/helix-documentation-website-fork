@@ -1,0 +1,111 @@
+---
+title: "Blueprint Basics"
+sidebar_position: 2
+---
+
+# Blueprint Basics
+
+You've seen the node graph in [Blueprints 101](/docs/core-concepts/blueprints-101). Now let's dig into the patterns you'll use every day in HELIX.
+
+## Creating a Blueprint Class
+
+In HELIX Studio, right-click in the Content Browser and select **Blueprint Class**. You'll pick a parent class:
+
+- **Actor** -- anything placed in the world
+- **Character** -- a pawn with movement built in
+- **GameMode** -- rules and flow for your game
+- **Widget** -- UI elements
+
+Pick the parent that matches what you're building. HELIX also provides custom parent classes like `HELIXCharacter` and `HELIXVehicle` that come with multiplayer support baked in.
+
+## Variables
+
+Variables store data in your Blueprint. Click **+ Variable** in the My Blueprint panel.
+
+### Common types
+
+| Type | Example use |
+|---|---|
+| `Boolean` | Is the door open? |
+| `Integer` | Player score |
+| `Float` | Movement speed |
+| `String` | Player name |
+| `Vector` | World position |
+| `Actor Reference` | The vehicle a player is driving |
+| `Array` | Inventory item list |
+| `Map` | Player ID to score lookup |
+
+Drag a variable onto the graph to get a **Get** node. Hold **Alt** and drag for a **Set** node. You can also right-click and search.
+
+### Exposing variables
+
+Check **Instance Editable** to make a variable tweakable in the Details panel when the actor is placed in a level. Check **Expose on Spawn** to require a value when spawning the actor from another Blueprint.
+
+## Functions
+
+Functions are reusable chunks of logic. Click **+ Function** in the My Blueprint panel to create one.
+
+- **Inputs** appear as pins on the left of the function call node
+- **Outputs** appear as pins on the right
+- **Pure functions** (check the Pure box) have no execution pins -- they compute and return a value, like a math formula
+
+Functions can be called from other Blueprints if you set their access to **Public**.
+
+## Custom Events
+
+Custom Events look like functions but with key differences:
+
+- They have **no return value**
+- They can be **replicated** across the network (Server, Client, Multicast)
+- They can run in **parallel** -- the caller doesn't wait for them to finish
+
+Create one by right-clicking the graph and selecting **Add Custom Event**. For multiplayer, set the Replicates dropdown to control where the event executes.
+
+## Casting
+
+When you have a generic reference (like an `Actor`) but need to access something specific (like your `HELIXCharacter`), you **cast**:
+
+1. Drag from the actor reference
+2. Search for **Cast To [YourClass]**
+3. The **As** output pin gives you the typed reference
+4. The **Cast Failed** execution pin handles cases where the actor isn't that type
+
+Casting is cheap but not free. Cache the result in a variable if you'll use it more than once per frame.
+
+## Blueprint Interfaces
+
+Interfaces let different Blueprint classes respond to the same function call without knowing each other's types.
+
+1. Create a **Blueprint Interface** asset (right-click > Blueprints > Blueprint Interface)
+2. Add function signatures to it (inputs/outputs, but no implementation)
+3. In your Blueprint class, go to **Class Settings > Interfaces** and add it
+4. Implement the interface functions in your Event Graph
+
+Now you can call that function on any actor that implements the interface -- no casting needed.
+
+## Blueprint Communication Patterns
+
+| Pattern | When to use |
+|---|---|
+| **Direct reference** | You know exactly which actor you're talking to |
+| **Casting** | You have a reference but need a more specific type |
+| **Interfaces** | Multiple unrelated classes need to respond to the same call |
+| **Event Dispatchers** | One actor broadcasts, many actors listen (observer pattern) |
+| **Game Instance** | Data that persists between levels |
+
+### Event Dispatchers
+
+Event Dispatchers are HELIX's observer pattern in Blueprints:
+
+1. Add an **Event Dispatcher** in the My Blueprint panel
+2. The broadcasting actor calls the dispatcher
+3. Other actors **Bind** to that dispatcher to receive the call
+
+This keeps your Blueprints decoupled. The broadcaster doesn't need to know who's listening.
+
+## Tips
+
+- **Comment your graphs.** Select nodes, press **C**, and add a description. Future-you will be grateful.
+- **Collapse to function** when a section of your graph gets reused. Select nodes and right-click > Collapse to Function.
+- **Use Reroute nodes** (double-click a wire) to keep spaghetti under control.
+- **Compile often.** The compile button catches errors before you hit Play.

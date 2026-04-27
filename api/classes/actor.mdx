@@ -1,0 +1,299 @@
+---
+title: "Actor"
+sidebar_position: 1
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Actor
+
+The **Actor** class is the base class for all objects that can be placed or spawned in the HELIX world. All lights, pawns, and gameplay entities inherit from this class. It provides functionality for replication, ticking, input handling, transformation, and lifecycle control.
+
+---
+
+## Constructor
+
+Actors are not instantiated directly. You spawn derived classes (e.g., `Light`, `HCharacter`, `HVehicle`, `Trigger`) which inherit all Actor functionality. Actors can also be spawned via the Unreal `HWorld:SpawnActor` API.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Get Actor Reference"
+  nodes={[
+    { id:'getref', title:'Get Actor of Class', style:'function', x:30, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'class',label:'Actor Class',type:'class',side:'input',value:'Actor'},
+      {id:'out',label:'Out Actor',type:'object',side:'output'}
+    ]}
+  ]}
+  wires={[]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Spawn an actor via HWorld
+local Actor = HWorld:SpawnActor(
+    UE.AActor,
+    SpawnTransform,
+    UE.ESpawnActorCollisionHandlingMethod.AlwaysSpawn
+)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for the spawn API.
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+## Networking Functions
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetReplicates` | `bInReplicates: boolean` | `void` | Set whether this actor replicates to network clients. |
+| `SetReplicateMovement` | `bInReplicateMovement: boolean` | `void` | Set whether this actor's movement replicates to network clients. |
+| `HasAuthority` | -- | `boolean` | Returns whether this actor has network authority (server-side check). |
+
+## Ticking Functions
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetActorTickEnabled` | `bEnabled: boolean` | `void` | Enables or disables the actor's tick function. |
+| `IsActorTickEnabled` | -- | `boolean` | Returns whether the actor's tick is enabled. |
+| `SetActorTickInterval` | `TickInterval: number` | `void` | Sets the tick interval of this actor's primary tick function. Takes effect on next tick. |
+| `GetActorTickInterval` | -- | `number` | Returns the tick interval of this actor's primary tick function. |
+
+## Transform Functions
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `K2_SetActorLocation` | `NewLocation: Vector`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `boolean` | Moves the actor to the specified world-space location. |
+| `K2_GetActorLocation` | -- | `Vector` | Returns the world location of the actor's RootComponent. |
+| `K2_SetActorRotation` | `NewRotation: Rotator`, `bTeleport: boolean` | `boolean` | Sets the actor's rotation. |
+| `K2_GetActorRotation` | -- | `Rotator` | Returns the world rotation of the actor's RootComponent. |
+| `K2_SetActorLocationAndRotation` | `NewLocation: Vector`, `NewRotation: Rotator`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `boolean` | Moves the actor to the specified location and rotation. |
+| `K2_SetActorTransform` | `NewTransform: Transform`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `boolean` | Sets the actor's full transform. |
+| `K2_TeleportTo` | `DestLocation: Vector`, `DestRotation: Rotator` | `boolean` | Teleports the actor to a new location, adjusting if it does not fit. |
+| `SetActorScale3D` | `NewScale3D: Vector` | `void` | Sets the actor's world-space scale. |
+| `SetActorRelativeScale3D` | `NewRelativeScale: Vector` | `void` | Sets the actor's RootComponent to the specified relative scale. |
+| `GetTransform` | -- | `Transform` | Returns the full world-space transform (location, rotation, scale). |
+| `GetActorScale3D` | -- | `Vector` | Returns the actor's current world-space scale. |
+| `GetActorRelativeScale3D` | -- | `Vector` | Returns the scale of the actor's root component relative to its parent. |
+| `K2_GetRootComponent` | -- | `SceneComponent` | Returns the root scene component of the actor. |
+| `K2_SetActorRelativeLocation` | `NewRelativeLocation: Vector`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `void` | Sets the actor's RootComponent to the specified relative location. |
+| `K2_SetActorRelativeRotation` | `NewRelativeRotation: Rotator`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `void` | Sets the actor's RootComponent to the specified relative rotation. |
+| `K2_SetActorRelativeTransform` | `NewRelativeTransform: Transform`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `void` | Sets the actor's RootComponent to the specified relative transform. |
+| `K2_AddActorWorldOffset` | `DeltaLocation: Vector`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `void` | Adds a delta to the location of this actor in world space. |
+| `K2_AddActorWorldRotation` | `DeltaRotation: Rotator`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `void` | Adds a delta to the rotation of this actor in world space. |
+| `K2_AddActorWorldTransform` | `DeltaTransform: Transform`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `void` | Applies a delta transform in world space. |
+| `K2_AddActorWorldTransformKeepScale` | `DeltaTransform: Transform`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `void` | Applies a delta transform in world space while preserving scale. |
+| `K2_AddActorLocalOffset` | `DeltaLocation: Vector`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `void` | Adds a local-space delta location to the actor's root. |
+| `K2_AddActorLocalRotation` | `DeltaRotation: Rotator`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `void` | Adds a local-space delta rotation to the actor's root. |
+| `K2_AddActorLocalTransform` | `DeltaTransform: Transform`, `bSweep: boolean`, `SweepHitResult: HitResult`, `bTeleport: boolean` | `void` | Adds a delta transform relative to the actor's local frame. |
+| `GetActorEyesViewPoint` | `OutLocation: Vector`, `OutRotation: Rotator` | `void` | Returns the viewpoint (location and rotation) of the actor's eyes. |
+
+## Attachment Functions
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `K2_AttachToActor` | `ParentActor: Actor`, `SocketName: string`, `LocationRule: EAttachmentRule`, `RotationRule: EAttachmentRule`, `ScaleRule: EAttachmentRule`, `bWeldSimulatedBodies: boolean` | `void` | Attaches this actor's RootComponent to another actor. |
+| `K2_DetachFromActor` | `LocationRule: EDetachmentRule`, `RotationRule: EDetachmentRule`, `ScaleRule: EDetachmentRule` | `void` | Detaches this actor's RootComponent from any parent. |
+| `K2_AttachToComponent` | `Parent: SceneComponent`, `SocketName: string`, `LocationRule: EAttachmentRule`, `RotationRule: EAttachmentRule`, `ScaleRule: EAttachmentRule`, `bWeldSimulatedBodies: boolean` | `void` | Attaches this actor's RootComponent to a scene component. |
+| `K2_AttachRootComponentToActor` | `InParentActor: Actor`, `InSocketName: string`, `AttachLocationType: EAttachLocation`, `bWeldSimulatedBodies: boolean` | `void` | Simplified variant for attaching to another actor. |
+| `K2_AttachRootComponentTo` | `InParent: SceneComponent`, `InSocketName: string`, `AttachLocationType: EAttachLocation`, `bWeldSimulatedBodies: boolean` | `void` | Lower-level variant for attaching to a scene component. |
+| `DetachRootComponentFromParent` | `bMaintainWorldPosition: boolean` | `void` | Detaches the actor's RootComponent from its parent. |
+| `GetAttachedActors` | `OutActors: table`, `bResetArray: boolean`, `bRecursivelyIncludeAttachedActors: boolean` | `void` | Fills an array with all actors attached to this actor. |
+
+## Lifecycle Functions
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetLifeSpan` | `InLifespan: number` | `void` | Sets the lifespan in seconds. Pass `0` to cancel and prevent auto-destruction. |
+| `GetLifeSpan` | -- | `number` | Gets the remaining lifespan. Returns `0` if the actor lives forever. |
+| `K2_DestroyActor` | -- | `void` | Destroys the actor and removes it from the level. |
+| `IsActorBeingDestroyed` | -- | `boolean` | Returns `true` if the actor is currently being destroyed. |
+
+## Collision Functions
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetActorEnableCollision` | `bNewActorEnableCollision: boolean` | `void` | Enables or disables collision for the whole actor. |
+| `GetActorEnableCollision` | -- | `boolean` | Returns whether collision is currently enabled. |
+| `GetActorBounds` | `bOnlyCollidingComponents: boolean`, `Origin: Vector`, `BoxExtent: Vector`, `bIncludeFromChildActors: boolean` | `void` | Returns the origin and box extent of the actor's combined components. |
+
+## Component Functions
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `GetComponentByClass` | `ComponentClass: Class` | `ActorComponent` | Returns the first component matching the specified class, or `nil` if none found. |
+| `K2_GetComponentsByClass` | `ComponentClass: Class` | `table` | Returns all components of the specified class. |
+| `AddComponentByClass` | `Class: Class`, `bManualAttachment: boolean`, `RelativeTransform: Transform`, `bDeferredFinish: boolean` | `ActorComponent` | Creates and adds a new component of the given class. |
+| `FinishAddComponent` | `Component: ActorComponent`, `bManualAttachment: boolean`, `RelativeTransform: Transform` | `void` | Finalizes the creation of a new actor component. |
+
+## Input Functions
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `EnableInput` | `PlayerController: PlayerController` | `void` | Adds this actor to the input stack for the specified PlayerController. |
+| `DisableInput` | `PlayerController: PlayerController` | `void` | Removes this actor from the input stack. |
+
+## View and Direction Functions
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `GetActorForwardVector` | -- | `Vector` | Returns the forward (X axis) vector of the actor in world space. |
+| `GetActorRightVector` | -- | `Vector` | Returns the right (Y axis) vector of the actor in world space. |
+| `GetActorUpVector` | -- | `Vector` | Returns the up (Z axis) vector of the actor in world space. |
+
+## Distance Functions
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `GetVelocity` | -- | `Vector` | Returns the velocity in cm/s. |
+| `GetDistanceTo` | `OtherActor: Actor` | `number` | Returns the full 3D distance to another actor. |
+| `GetSquaredDistanceTo` | `OtherActor: Actor` | `number` | Returns the squared 3D distance (avoids square root). |
+| `GetHorizontalDistanceTo` | `OtherActor: Actor` | `number` | Returns the horizontal (XY) distance to another actor. |
+| `GetSquaredHorizontalDistanceTo` | `OtherActor: Actor` | `number` | Returns the squared horizontal distance. |
+| `GetVerticalDistanceTo` | `OtherActor: Actor` | `number` | Returns the vertical (Z-axis only) distance. |
+
+## Visibility Functions
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetActorHiddenInGame` | `bNewHidden: boolean` | `void` | Shows or hides the actor in the game world. |
+
+---
+
+## Examples
+
+### Moving an Actor
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Move Actor to Location"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'mv', title:'Make Vector', style:'pure', x:280, y:120, pins:[
+      {id:'x',label:'X',type:'float',side:'input',value:'500.0'},
+      {id:'y',label:'Y',type:'float',side:'input',value:'0.0'},
+      {id:'z',label:'Z',type:'float',side:'input',value:'200.0'},
+      {id:'out',label:'Return Value',type:'vector',side:'output'}
+    ]},
+    { id:'sal', title:'Set Actor Location', style:'function', x:530, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'loc',label:'New Location',type:'vector',side:'input'},
+      {id:'sweep',label:'Sweep',type:'bool',side:'input',value:'true'},
+      {id:'teleport',label:'Teleport',type:'bool',side:'input',value:'false'},
+      {id:'ret',label:'Return Value',type:'bool',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'sal',pin:'ei'}},
+    {from:{node:'mv',pin:'out'},to:{node:'sal',pin:'loc'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Move the actor to a new position
+local success = Actor:K2_SetActorLocation(Vector(300, 0, 0), true, nil, false)
+
+-- Destroy the actor after 60 seconds
+Actor:SetLifeSpan(60)
+
+-- Get the actor's forward vector
+local fwd = Actor:GetActorForwardVector()
+local target = Actor:K2_GetActorLocation() + fwd * 500
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Move the actor to a new position
+const success = myActor.K2_SetActorLocation(new Vector(300, 0, 0), true, null, false);
+
+// Destroy the actor after 60 seconds
+myActor.SetLifeSpan(60);
+```
+
+</TabItem>
+</Tabs>
+
+### Attaching Actors
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Attach Actor to Actor"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'att', title:'Attach Actor To Actor', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input',value:'Child Actor'},
+      {id:'parent',label:'Parent Actor',type:'object',side:'input',value:'Parent Actor'},
+      {id:'socket',label:'Socket Name',type:'name',side:'input',value:'"SocketName"'},
+      {id:'locrule',label:'Location Rule',type:'enum',side:'input',value:'Keep World'},
+      {id:'rotrule',label:'Rotation Rule',type:'enum',side:'input',value:'Keep World'},
+      {id:'scalerule',label:'Scale Rule',type:'enum',side:'input',value:'Keep World'},
+      {id:'weld',label:'Weld Simulated Bodies',type:'bool',side:'input',value:'true'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'att',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+Actor:K2_AttachToActor(
+    OtherActor, "SocketName",
+    UE.EAttachmentRule.KeepWorld,
+    UE.EAttachmentRule.KeepWorld,
+    UE.EAttachmentRule.KeepWorld,
+    true
+)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+:::tip Performance
+Disable tick on actors that do not need per-frame updates. Calling `SetActorTickEnabled(false)` on static props can significantly improve server and client performance.
+:::

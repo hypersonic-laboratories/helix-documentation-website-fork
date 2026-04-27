@@ -1,0 +1,53 @@
+---
+title: "Client-Server Model"
+sidebar_position: 1
+---
+
+# Client-Server Model
+
+HELIX uses Unreal Engine 5's built-in networking architecture, which follows a **server-authoritative** model. This means the server is always the source of truth -- it has the final say on what's happening in your world, and clients display the results.
+
+## How It Works
+
+Every HELIX multiplayer session has two sides:
+
+- **Server** -- The authority. It runs the game logic, validates actions, manages spawning, tracks health, inventory, scores, and everything that matters. When there's a disagreement between what a client thinks happened and what the server says happened, the server wins.
+- **Client** -- What each player actually sees and interacts with. The client handles rendering, input, UI, and local effects like sounds and particles. It sends requests to the server ("I want to move here", "I want to shoot") and waits for the server to confirm.
+
+Think of it like a restaurant: the client is the customer placing orders, and the server is the kitchen deciding what actually gets made.
+
+## Why Server-Authoritative?
+
+The main reason is **cheat prevention**. If clients could decide the outcome of their own actions, anyone could modify their game to give themselves infinite health or teleport anywhere. With a server-authoritative model, the server validates everything before it becomes "real" in the game world.
+
+It also keeps things **consistent**. When 50 players are in the same world, everyone needs to agree on what's happening. The server acts as the single point of coordination.
+
+## Authority and Ownership
+
+In HELIX, every actor (anything that exists in the world) has an **owner** -- usually the server, but sometimes a specific client. The owner is responsible for driving that actor's behavior.
+
+For example, a player's character is typically owned by their client for smooth movement input, but the server still validates the results. Projectiles, AI characters, and world objects are usually server-owned.
+
+You can check and change authority in your scripts:
+
+- **Has Authority** -- Returns `true` if the current context (server or client) owns this actor.
+- **Get Owner** -- Returns which connection owns an actor.
+
+## What Runs Where?
+
+Here's a quick breakdown:
+
+| Server | Client |
+|--------|--------|
+| Game rules and logic | Rendering and visuals |
+| Spawning and despawning | Player input |
+| Damage calculations | UI and HUD |
+| Inventory management | Sound effects and particles |
+| Score tracking | Camera control |
+| Anti-cheat validation | Cosmetic-only effects |
+
+The golden rule: **if it affects gameplay, it belongs on the server.** If it's cosmetic or input-related, it can live on the client.
+
+## Next Steps
+
+Now that you understand the split between client and server, check out [Replication](./replication.mdx) to learn how data stays in sync across the network, and [Remote Calls](./remote-calls.mdx) to see how the two sides communicate.

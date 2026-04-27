@@ -1,0 +1,112 @@
+---
+title: "QBCore Installation"
+sidebar_position: 2
+---
+
+# QBCore Installation
+
+Getting QBCore running on your HELIX server takes a few steps. This guide covers everything from downloading the framework to verifying your first boot.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- **HELIX** installed (client + server)
+- **HELIX Studio** for world editing (optional but recommended)
+- A basic understanding of how [HELIX packages](/docs/scripting/packages) work
+
+## Step 1: Download QBCore (Preferred Method)
+
+The easiest way to get started is through the HELIX game client:
+
+1. Launch the HELIX game client
+2. Browse the **Worlds** tab and find the **QBCore Template World**
+3. Click on the preview image and click the **REMIX** button
+4. Enter your desired world name and press **CONFIRM**
+
+This gives you the latest version of QBCore with all required dependencies pre-installed.
+
+## Step 1 (Alternative): Download from GitHub
+
+For advanced users who prefer manual setup:
+
+```bash
+git clone https://github.com/hypersonic-laboratories/qbcore-rp
+```
+
+You can also download the ZIP from [the GitHub repository](https://github.com/hypersonic-laboratories/qbcore-rp). Place the contents in your workspace's `scripts/` directory.
+
+## Step 2: Set Up Your Workspace (GitHub Method)
+
+If using the GitHub method:
+
+1. Launch the HELIX client and click **Create World** to configure it
+2. Once loaded, press `N` to open build mode
+3. In the bottom left, select **Vault**, search for `shells` and add it to your world
+4. Also add the **RP Downtown Map** from Vault
+5. Click the code icon (tooltip: "Edit Scripts") to open the scripts directory
+6. Place the QBCore repository contents inside the `scripts/` folder
+
+## Step 3: Configure Your Server
+
+Open your server's `Config.json` and make sure the QBCore packages are listed and enabled:
+
+```json
+{
+    "name": "My RP Server",
+    "max_players": 64,
+    "packages": [
+        "qb-core",
+        "qb-multicharacter",
+        "qb-spawn",
+        "qb-clothing",
+        "qb-inventory"
+    ]
+}
+```
+
+## Step 4: Configure QBCore Settings
+
+Inside `packages/qb-core/config.lua`, you'll find the main configuration file. Key settings to review:
+
+```lua
+QBConfig = {
+    MaxPlayers = 64,
+    DefaultSpawn = Vector(-1035.71, -2731.87, 12.86),
+    Money = {
+        Types = { "cash", "bank", "crypto" },
+        StartingCash = 500,
+        StartingBank = 5000,
+    },
+    Server = {
+        PVP = true,
+        Closed = false,
+        ClosedReason = "Server is currently closed for maintenance",
+    }
+}
+```
+
+Adjust these values to match your server's needs.
+
+## Step 5: Start Your Server
+
+Press the **Save** button inside build mode, then leave and rejoin the world. You should see QBCore initialization messages in the console:
+
+```
+[QBCore] Core framework loaded
+[QBCore] Shared data initialized
+[QBCore] 0 players cached
+[QBCore] Ready!
+```
+
+If you see errors, double-check that all dependency packages are installed and that your database is set up.
+
+## Verifying the Installation
+
+Connect to your server as a player. You should be greeted with:
+
+1. A **character selection** screen (from qb-multicharacter)
+2. A **character creation** flow (from qb-clothing)
+3. A **spawn selection** menu (from qb-spawn)
+
+If all three work, QBCore is up and running. Head to the [Player Guide](./player-guide) to learn how the core systems work.

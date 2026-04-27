@@ -1,0 +1,332 @@
+---
+title: Database
+sidebar_position: 8
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Database
+
+HELIX provides a built-in database system through the [`Database`](/api/classes/database) module, backed by SQLite. This gives you persistent storage for player data, inventories, leaderboards, world state, and anything else that needs to survive a server restart.
+
+## Initializing the Database
+
+The database file lives on your server and is created automatically when you first initialize. Call [`Database.Initialize`](/api/classes/database) once with the file path for your `.db` file.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Initialize a SQLite database"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'init', title:'Database Initialize', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'path',label:'File Path',type:'string',side:'input',value:'"Saved/Database/my_world.db"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'init',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Initialize (or create) a SQLite database
+Database.Initialize("Saved/Database/my_world.db")
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Initialize (or create) a SQLite database
+Database.Initialize("Saved/Database/my_world.db");
+```
+
+</TabItem>
+</Tabs>
+
+## Creating Tables
+
+Define your schema with standard SQL. Run this on server start so your tables are always ready.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Create a players table with SQL"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'exec', title:'Database Execute', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'sql',label:'SQL',type:'string',side:'input',value:'"CREATE TABLE IF NOT EXISTS players (...)"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'exec',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+Database.Execute([[
+    CREATE TABLE IF NOT EXISTS players (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        money INTEGER DEFAULT 0,
+        inventory TEXT DEFAULT '[]',
+        last_position TEXT
+    )
+]])
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+Database.Execute(`
+    CREATE TABLE IF NOT EXISTS players (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        money INTEGER DEFAULT 0,
+        inventory TEXT DEFAULT '[]',
+        last_position TEXT
+    )
+`);
+```
+
+</TabItem>
+</Tabs>
+
+## CRUD Operations
+
+Use [`Database.Execute`](/api/classes/database) for writes and [`Database.Select`](/api/classes/database) for reads. Parameterized queries keep your data safe from injection.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="CRUD operations: insert, update, select, delete"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'insert', title:'Database Execute', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'sql',label:'SQL',type:'string',side:'input',value:'"INSERT OR IGNORE INTO players ..."'},
+      {id:'p1',label:'Param 1',type:'string',side:'input',value:'SteamID'},
+      {id:'p2',label:'Param 2',type:'string',side:'input',value:'PlayerName'}
+    ]},
+    { id:'update', title:'Database Execute', style:'function', x:600, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'sql',label:'SQL',type:'string',side:'input',value:'"UPDATE players SET money = ?"'},
+      {id:'p1',label:'Param 1',type:'int',side:'input',value:'500'},
+      {id:'p2',label:'Param 2',type:'string',side:'input',value:'SteamID'}
+    ]},
+    { id:'select', title:'Database Select', style:'function', x:900, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'sql',label:'SQL',type:'string',side:'input',value:'"SELECT * FROM players WHERE id = ?"'},
+      {id:'p1',label:'Param 1',type:'string',side:'input',value:'SteamID'},
+      {id:'ret',label:'Rows',type:'array',side:'output'}
+    ]},
+    { id:'delete', title:'Database Execute', style:'function', x:1200, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'sql',label:'SQL',type:'string',side:'input',value:'"DELETE FROM players WHERE id = ?"'},
+      {id:'p1',label:'Param 1',type:'string',side:'input',value:'SteamID'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'insert',pin:'ei'}},
+    {from:{node:'insert',pin:'eo'},to:{node:'update',pin:'ei'}},
+    {from:{node:'update',pin:'eo'},to:{node:'select',pin:'ei'}},
+    {from:{node:'select',pin:'eo'},to:{node:'delete',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Insert a new player
+Database.Execute("INSERT OR IGNORE INTO players (id, name) VALUES (?, ?)",
+    {player:GetSteamID(), player:GetName()})
+
+-- Update player money
+Database.Execute("UPDATE players SET money = ? WHERE id = ?",
+    {500, player:GetSteamID()})
+
+-- Read player data
+local rows = Database.Select("SELECT * FROM players WHERE id = ?",
+    {player:GetSteamID()})
+for _, row in ipairs(rows) do
+    print(row.Columns.name, row.Columns.money)
+end
+
+-- Delete a player record
+Database.Execute("DELETE FROM players WHERE id = ?", {player:GetSteamID()})
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Insert a new player
+Database.Execute("INSERT OR IGNORE INTO players (id, name) VALUES (?, ?)",
+    player.GetSteamID(), player.GetName());
+
+// Update player money
+Database.Execute("UPDATE players SET money = ? WHERE id = ?",
+    500, player.GetSteamID());
+
+// Read player data
+const rows = Database.Select("SELECT * FROM players WHERE id = ?",
+    player.GetSteamID());
+
+// Delete a player record
+Database.Execute("DELETE FROM players WHERE id = ?", player.GetSteamID());
+```
+
+</TabItem>
+</Tabs>
+
+## Saving Player Data on Events
+
+A common pattern is to save data when players disconnect and load it when they join.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Save player position on disconnect"
+  nodes={[
+    { id:'evt', title:'Event PlayerDisconnect', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'player',label:'Player',type:'object',side:'output'}
+    ]},
+    { id:'getchar', title:'Get Character', style:'pure', x:30, y:160, pins:[
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'ret',label:'Character',type:'object',side:'output'}
+    ]},
+    { id:'getloc', title:'Get Actor Location', style:'pure', x:280, y:160, pins:[
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'ret',label:'Location',type:'vector',side:'output'}
+    ]},
+    { id:'save', title:'Database Execute', style:'function', x:350, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'sql',label:'SQL',type:'string',side:'input',value:'"UPDATE players SET last_position = ?"'},
+      {id:'pos',label:'Position',type:'string',side:'input'},
+      {id:'id',label:'Steam ID',type:'string',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'evt',pin:'eo'},to:{node:'save',pin:'ei'}},
+    {from:{node:'evt',pin:'player'},to:{node:'getchar',pin:'target'}},
+    {from:{node:'getchar',pin:'ret'},to:{node:'getloc',pin:'target'}}
+  ]}
+/>
+
+<BlueprintGraph
+  title="Load player position on join"
+  nodes={[
+    { id:'evt', title:'Event PlayerReady', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'player',label:'Player',type:'object',side:'output'}
+    ]},
+    { id:'sel', title:'Database Select', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'sql',label:'SQL',type:'string',side:'input',value:'"SELECT last_position FROM players WHERE id = ?"'},
+      {id:'id',label:'Steam ID',type:'string',side:'input'},
+      {id:'ret',label:'Rows',type:'array',side:'output'}
+    ]},
+    { id:'branch', title:'Branch', style:'branch', x:600, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'cond',label:'Condition',type:'bool',side:'input'},
+      {id:'true',label:'True',type:'exec',side:'output'},
+      {id:'false',label:'False',type:'exec',side:'output'}
+    ]},
+    { id:'teleport', title:'Set Actor Location', style:'function', x:870, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'loc',label:'New Location',type:'vector',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'evt',pin:'eo'},to:{node:'sel',pin:'ei'}},
+    {from:{node:'sel',pin:'eo'},to:{node:'branch',pin:'ei'}},
+    {from:{node:'branch',pin:'true'},to:{node:'teleport',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Save position on disconnect
+RegisterServerEvent("HEvent:PlayerUnloaded", function(controller)
+    local char = controller:GetControlledCharacter()
+    if char then
+        local pos = char:K2_GetActorLocation()
+        Database.Execute("UPDATE players SET last_position = ? WHERE id = ?",
+            {tostring(pos), tostring(controller)})
+    end
+end)
+
+-- Load position on join
+RegisterServerEvent("HEvent:PlayerReady", function(controller)
+    local rows = Database.Select("SELECT last_position FROM players WHERE id = ?",
+        {tostring(controller)})
+    if #rows > 0 and rows[1].Columns.last_position then
+        -- Parse and teleport to saved position
+    end
+end)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Using Helix server-side events for player lifecycle
+Helix.server(() => {
+    Helix.on("PlayerDisconnect", (player) => {
+        // Save position on disconnect
+        const pos = player.GetCharacter().K2_GetActorLocation();
+        // Use your database ORM to persist
+    });
+
+    Helix.on("PlayerReady", (player) => {
+        // Load position on join
+        // Use your database ORM to query
+    });
+});
+```
+
+</TabItem>
+</Tabs>
+
+## Async Operations
+
+For operations that shouldn't block the game loop, use [`Database.ExecuteAsync`](/api/classes/database) and [`Database.SelectAsync`](/api/classes/database). These run in the background and call a callback function when complete.
+
+:::tip
+Always use parameterized queries (`?` placeholders) instead of string concatenation. This prevents SQL injection and handles special characters automatically.
+:::

@@ -1,0 +1,235 @@
+---
+title: "Light"
+sidebar_position: 9
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Light
+
+The **Light** class extends [Actor](./actor.mdx) and simplifies the process of spawning and configuring dynamic lights in Unreal Engine. It supports three light types -- Point, Spot, and Rect -- and automatically sets up location, rotation, color, intensity, attenuation, and shadow settings.
+
+:::tip
+`Light` is an `Actor`, so it inherits all functions from [Actor](./actor.mdx).
+:::
+
+## Light Profiles
+
+- **Point** lights act as a light bulb, casting light in all directions from a single point.
+- **Spot** lights emit light from a single point in a direction limited by a set of cones.
+- **Rect** lights emit light from a rectangular surface in a direction.
+
+---
+
+## Constructor
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Spawn Light Actor"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'spawn', title:'Spawn Actor from Class', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'class',label:'Class',type:'class',side:'input',value:'Light'},
+      {id:'transform',label:'Spawn Transform',type:'transform',side:'input'},
+      {id:'ret',label:'Return Value',type:'object',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'spawn',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Spawn a spot light
+local myLight = Light(
+    Vector(0, 0, 300),           -- location
+    Rotator(45, 0, 0),           -- rotation
+    LinearColor(1, 0.5, 0.5, 1), -- color
+    LightType.Spot,              -- light type
+    8000,                        -- intensity
+    1200,                        -- attenuation radius
+    30,                          -- cone angle
+    0.2,                         -- inner cone percent
+    5000,                        -- max draw distance
+    true,                        -- use inverse squared falloff
+    true,                        -- cast shadows
+    true                         -- visible
+)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for constructor parameters.
+```
+
+</TabItem>
+</Tabs>
+
+### Constructor Parameters
+
+| Name | Type | Default | Description |
+|---|---|---|---|
+| `Location` | `Vector` | `(0,0,0)` | Spawn position in world space. |
+| `Rotation` | `Rotator` | `(0,0,0)` | Initial rotation of the light. |
+| `Color` | `LinearColor` | white | Light color and alpha. |
+| `LightTypeParam` | `enum` | `LightType.Point` | `LightType.Point`, `.Spot`, or `.Rect`. |
+| `Intensity` | `number` | `5000` | Light brightness (in lumens). |
+| `AttenuationRadius` | `number` | `1000` | Distance the light affects (Point/Spot only). |
+| `ConeAngle` | `number` | `44` | Outer angle for Spot lights. |
+| `InnerConePercent` | `number` | `0` | Inner angle as a percent of outer angle. |
+| `MaxDrawDistance` | `number` | `0` | Fade out distance (0 = infinite). |
+| `UseInverseSquaredFalloff` | `boolean` | `true` | Use physically accurate light falloff. |
+| `CastShadows` | `boolean` | `true` | Enable shadow casting. |
+| `Visible` | `boolean` | `true` | Whether the light is visible. |
+
+---
+
+## Methods
+
+### General
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `ToggleEnabled` | -- | `void` | Enables or disables the light. |
+| `IsEnabled` | -- | `boolean` | Returns the enabled status of the light. |
+| `GetLightColor` | -- | `Color` | Returns the current color of the light. |
+| `GetBrightness` | -- | `number` | Returns the brightness amount. |
+
+### Color and Intensity
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetLightFColor` | `NewLightColor: Color` | `void` | Sets the light color using a `Color` value. |
+| `SetLightColor` | `NewLightColor: LinearColor` | `void` | Sets the light color using a `LinearColor` value. |
+| `SetIntensityUnits` | `NewIntensityUnits: ELightUnits` | `void` | Sets how the light's intensity is measured (unitless, lumens, candelas, or EV). |
+| `SetAttenuationRadius` | `NewRadius: number` | `void` | Sets the distance at which the light has no effect. |
+| `SetCastShadows` | `bNewValue: boolean` | `void` | Sets whether the light casts shadows. |
+| `SetCastVolumetricShadow` | `bNewValue: boolean` | `void` | Enables or disables volumetric shadow casting. |
+| `SetAffectReflection` | `bNewValue: boolean` | `void` | Enables or disables the light's influence on reflections. |
+| `SetAffectGlobalIllumination` | `bNewValue: boolean` | `void` | Enables or disables the light's contribution to global illumination. |
+| `SetVolumetricScatteringIntensity` | `NewIntensity: number` | `void` | Controls the light's contribution to volumetric lighting. |
+| `SetUseTemperature` | `bNewValue: boolean` | `void` | Enables or disables using Kelvin temperature for light color. |
+| `SetTemperature` | `NewTemperature: number` | `void` | Sets the color temperature in Kelvin (requires `SetUseTemperature(true)`). |
+
+### Light Function
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetLightFunctionScale` | `NewLightFunctionScale: Vector` | `void` | Sets the scale of the light function projection. |
+| `SetLightFunctionMaterial` | `NewLightFunctionMaterial: UMaterialInterface` | `void` | Sets a material to use as the light function (gobo effect). |
+| `SetLightFunctionFadeDistance` | `NewLightFunctionFadeDistance: number` | `void` | Controls how far the light function effect fades out. |
+
+### Spot Light
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetOuterConeAngle` | `NewOuterConeAngle: number` | `void` | Sets the outer cone angle for spot lights. |
+| `SetInnerConeAngle` | `NewInnerConeAngle: number` | `void` | Sets the inner cone angle for spot lights. |
+
+### Rect Light
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetSourceWidth` | `NewValue: number` | `void` | Sets the width of the source rectangle. |
+| `SetSourceHeight` | `NewValue: number` | `void` | Sets the height of the source rectangle. |
+| `SetSourceTexture` | `NewValue: UTexture` | `void` | Assigns a texture to the rect light source. |
+| `SetBarnDoorLength` | `NewValue: number` | `void` | Controls the length of the barn doors. |
+| `SetBarnDoorAngle` | `NewValue: number` | `void` | Controls the angle of the barn doors. |
+
+### Point Light
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetSourceRadius` | `NewValue: number` | `void` | Sets the radius of the source for point lights. |
+| `SetSoftSourceRadius` | `NewValue: number` | `void` | Sets the radius of the soft source effect. |
+| `SetSourceLength` | `NewValue: number` | `void` | Sets the source length for tube-style light emission. |
+
+---
+
+## Examples
+
+### Dynamic Spotlight
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Configure Dynamic Spotlight"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'color', title:'Set Light Color', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input',value:'Light Ref'},
+      {id:'color',label:'New Light Color',type:'struct',side:'input',value:'(1.0, 0.0, 0.5, 1.0)'}
+    ]},
+    { id:'toggle', title:'Toggle Enabled', style:'function', x:580, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input',value:'Light Ref'}
+    ]},
+    { id:'check', title:'Is Enabled', style:'pure', x:580, y:170, pins:[
+      {id:'target',label:'Target',type:'object',side:'input',value:'Light Ref'},
+      {id:'ret',label:'Return Value',type:'bool',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'color',pin:'ei'}},
+    {from:{node:'color',pin:'eo'},to:{node:'toggle',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+local myLight = Light(
+    Vector(0, 0, 300),
+    Rotator(45, 0, 0),
+    LinearColor(1, 0.5, 0.5, 1),
+    LightType.Spot,
+    8000, 1200, 30, 0.2, 5000, true, true, true
+)
+
+-- Change color at runtime
+myLight:SetLightColor(LinearColor(1.0, 0.0, 0.5, 1.0))
+
+-- Toggle the light off
+myLight:ToggleEnabled()
+
+-- Check if enabled
+local isEnabled = myLight:IsEnabled()
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+:::tip Performance
+Dynamic shadow-casting lights are expensive. Use `SetCastShadows(false)` for ambient or decorative lights that do not need shadows.
+:::

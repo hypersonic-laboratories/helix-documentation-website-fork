@@ -1,0 +1,152 @@
+---
+title: "Input System"
+sidebar_position: 6
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Input System
+
+Keyboards, mice, gamepads, touchscreens — your players have a lot of ways to interact with your game. UE5's **Enhanced Input System** gives you a clean, flexible way to handle all of them by separating the *what* (the action) from the *how* (the key binding).
+
+## Core Concepts
+
+### Input Actions
+
+An **Input Action** (IA) represents *what* the player wants to do — jump, fire, move, interact. It doesn't care which button triggers it. Think of it as the *intent*. Input Actions also define the value type they produce: a `bool` (pressed/released), a `float` (trigger pressure), or a `Vector2D` (thumbstick direction).
+
+Create one by right-clicking in the Content Browser: **Input > Input Action**.
+
+### Input Mapping Contexts
+
+An **Input Mapping Context** (IMC) maps physical inputs (keys, buttons, sticks) to Input Actions. "Spacebar triggers Jump." "Left stick triggers Move." You can swap mapping contexts at runtime — different controls for driving vs walking vs menus.
+
+Create one by right-clicking in the Content Browser: **Input > Input Mapping Context**.
+
+### Modifiers and Triggers
+
+**Modifiers** transform the raw input (dead zones, sensitivity curves, axis negation). **Triggers** define *when* the action fires (pressed, released, held for a duration).
+
+## Setting It Up in HELIX Studio
+
+1. Right-click in the Content Browser > **Input > Input Action** — create actions like `IA_Jump`, `IA_Interact`
+2. Right-click > **Input > Input Mapping Context** — create `IMC_Default`
+3. Open your mapping context, add your actions, and bind keys to them
+4. In your Player Controller or Character, add the mapping context at BeginPlay
+
+## Binding a Key Press
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Enhanced Input — Jump"
+  width={750}
+  height={260}
+  nodes={[
+    {
+      id: "ia",
+      title: "Enhanced Input Action IA_Jump",
+      style: "event",
+      x: 20,
+      y: 50,
+      pins: [
+        { id: "triggered", label: "Triggered", type: "exec", side: "output" },
+        { id: "value", label: "Action Value", type: "float", side: "output" },
+        { id: "elapsed", label: "Elapsed Time", type: "float", side: "output" }
+      ]
+    },
+    {
+      id: "jump",
+      title: "Jump",
+      style: "function",
+      x: 440,
+      y: 40,
+      pins: [
+        { id: "exec_in", label: "", type: "exec", side: "input" },
+        { id: "exec_out", label: "", type: "exec", side: "output" },
+        { id: "target", label: "Target", type: "object", side: "input", value: "Self" }
+      ]
+    }
+  ]}
+  wires={[
+    { from: { node: "ia", pin: "triggered" }, to: { node: "jump", pin: "exec_in" } }
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Bind an enhanced input action
+function MyCharacter:SetupPlayerInputComponent(InputComponent)
+    local EIC = InputComponent:Cast(UE.UEnhancedInputComponent)
+    EIC:BindAction(self.JumpAction, UE.ETriggerEvent.Triggered, self, self.HandleJump)
+end
+
+function MyCharacter:HandleJump()
+    self:Jump()
+end
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+class MyCharacter extends ue.Character {
+    SetupPlayerInputComponent(inputComponent) {
+        let eic = ue.EnhancedInputComponent.Cast(inputComponent);
+        eic.BindAction(this.JumpAction, ue.ETriggerEvent.Triggered, this, "HandleJump");
+    }
+
+    HandleJump() {
+        this.Jump();
+    }
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Supported Devices
+
+The Enhanced Input System handles all common devices out of the box:
+
+- **Keyboard & Mouse** — individual key bindings, mouse axes, scroll wheel
+- **Gamepad** — buttons, triggers with analog pressure, thumbsticks
+- **Touch** — tap, swipe, and multi-touch gestures
+
+You can bind the same Input Action to multiple devices in your mapping context, so players can use whatever controller they prefer without any extra code on your end.
+
+## Why Enhanced Input?
+
+The older input system (Action Mappings / Axis Mappings) still works but is deprecated. Enhanced Input gives you:
+
+- **Runtime remapping** — let players rebind keys without restarting
+- **Context switching** — swap entire control schemes on the fly
+- **Modifiers** — dead zones, sensitivity, and input smoothing built in
+- **Multiplayer-friendly** — each player can have their own mapping context
+
+## HELIX Input API (Lua)
+
+In addition to UE5's Enhanced Input System, HELIX provides a simpler [`Input`](/api/classes/input) class for quick key binding in Lua scripts:
+
+```lua
+-- Bind a key press
+Input.BindKey('Tab', function()
+    print('Tab Pressed')
+end, 'Pressed')
+
+-- Bind a key release
+Input.BindKey('Tab', function()
+    print('Tab Released')
+end, 'Released')
+```
+
+The `Input.BindKey` function takes a key name (string), a callback function, and an optional listener type (`'Pressed'` or `'Released'`). This is useful for quick prototyping and UI interactions without setting up full Input Actions.
+
+:::tip
+Name your Input Actions with an `IA_` prefix and Mapping Contexts with `IMC_`. Your Content Browser will thank you when you have dozens of them.
+:::

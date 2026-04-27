@@ -1,0 +1,101 @@
+---
+title: "Packages"
+sidebar_position: 5
+---
+
+# Packages
+
+A **Package** is HELIX's modular unit -- a self-contained bundle of scripts, assets, and configuration. Think of it like an npm package or a mod: it does one thing, declares its dependencies, and can be shared.
+
+## Folder Structure
+
+All Lua packages live under `Workspace/scripts/`. Each subfolder is a single package:
+
+```
+Workspace/
+└── scripts/
+    ├── MyPackage/
+    │   ├── client.lua
+    │   ├── server.lua
+    │   ├── shared/
+    │   │   └── utils.lua
+    │   └── package.json
+    ├── MyPackage2/
+    │   ├── client.lua
+    │   └── package.json
+    └── config.json
+```
+
+Each package contains Lua scripts organized by execution context (client, server, or shared). The `config.json` in the `scripts/` directory controls which packages are loaded.
+
+## config.json
+
+The `config.json` file in `Workspace/scripts/` lists which packages to load (in order):
+
+```json
+{
+  "packages": [
+    "MyPackage",
+    "MyPackage2"
+  ]
+}
+```
+
+When the server starts, it reads this list and loads each package by resolving its `package.json`.
+
+## package.json
+
+Every Package needs a `package.json` at its root. This manifest declares which scripts to load and on which side:
+
+```json
+{
+  "shared": ["config.lua", "shared/main.lua"],
+  "server": ["server/*.lua"],
+  "client": ["client/main.lua"]
+}
+```
+
+### Key fields
+
+| Field | Description |
+|---|---|
+| `client` | Array of Lua script paths to run on the client side |
+| `server` | Array of Lua script paths to run on the server side |
+| `shared` | Scripts loaded on both client and server (optional) |
+
+### Wildcard Support
+
+You can use wildcard patterns like `server/*.lua` to include all `.lua` files in a directory without listing each file individually.
+
+## Creating a Package
+
+1. Navigate to your `Workspace/scripts/` directory
+2. Create a new folder with your package name (e.g., `MyPackage`)
+3. Add a `package.json` declaring your client/server scripts
+4. Create the Lua script files referenced in your `package.json`
+5. Add the package name to `config.json` so it gets loaded
+
+## Cross-Package Communication
+
+Packages can communicate with each other using the HELIX event system. A server script in one package can trigger events that are handled by scripts in another package:
+
+```lua
+-- In PackageA (server.lua)
+TriggerLocalServerEvent('inventory:addItem', playerId, 'sword')
+
+-- In PackageB (server.lua)
+RegisterServerEvent('inventory:addItem', function(controller, playerId, itemName)
+    print("Adding item:", itemName)
+end)
+```
+
+Client-side cross-package communication works the same way with `TriggerLocalClientEvent` and `RegisterClientEvent`.
+
+## Publishing
+
+Packages are published as part of a World. When you publish a World from Build Mode, all scripts and package dependencies are bundled together. You can publish as:
+
+- **Publish as Map** -- only the map data is published as a Dynamic Map package (scripts are excluded)
+- **Publish as World** -- publishes the complete bundle (map + scripts + assets) as a World package
+
+Your published content becomes available on the [Vault](/docs/publishing/the-vault) for others to use.

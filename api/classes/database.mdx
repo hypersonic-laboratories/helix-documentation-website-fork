@@ -1,0 +1,225 @@
+---
+title: "Database"
+sidebar_position: 8
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Database
+
+The **Database** module provides a server-side SQLite database interface for persistent data storage. Use it to store player data, inventories, leaderboards, and any other persistent state. It provides both synchronous and asynchronous methods for executing queries and retrieving results.
+
+**Authority:** Server -- Database operations can only be performed on the server.
+
+---
+
+## Methods
+
+| Method | Parameters | Return Type | Authority | Description |
+|---|---|---|---|---|
+| `Database.Initialize` | `path: string` | `void` | **Server** | Sets the file path for the SQLite database. Only needs to be called once. |
+| `Database.Execute` | `query: string`, `params: table` | `boolean` | **Server** | Runs a SQL command (`CREATE TABLE`, `INSERT`, `UPDATE`, `DELETE`). Returns `true` on success. |
+| `Database.ExecuteAsync` | `query: string`, `params: table`, `callback: function` | `void` | **Server** | Same as `Execute`, but runs in the background. The callback receives a `boolean` success value. |
+| `Database.Select` | `query: string`, `params: table` | `table` | **Server** | Runs a `SELECT` query and returns a list of rows. Each row has a `.Columns` table with the column values. |
+| `Database.SelectAsync` | `query: string`, `params: table`, `callback: function` | `void` | **Server** | Same as `Select`, but runs in the background. The callback receives the rows table. |
+
+---
+
+## Examples
+
+### Initializing the Database
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Initialize Database and Create Table"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'init', title:'Database Initialize', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'path',label:'Path',type:'string',side:'input',value:'"Saved/Database/data.db"'}
+    ]},
+    { id:'exec', title:'Database Execute', style:'function', x:600, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'query',label:'Query',type:'string',side:'input',value:'"CREATE TABLE IF NOT EXISTS..."'},
+      {id:'params',label:'Params',type:'array',side:'input'},
+      {id:'ret',label:'Success',type:'bool',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'init',pin:'ei'}},
+    {from:{node:'init',pin:'eo'},to:{node:'exec',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Initialize the database path (call once at startup)
+Database.Initialize('Saved/Database/lua.db')
+
+-- Create a table
+Database.Execute('CREATE TABLE IF NOT EXISTS PlayerData (PlayerID TEXT PRIMARY KEY, PlayerName TEXT, Score INTEGER)')
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+### CRUD Operations
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Database CRUD Operations"
+  nodes={[
+    { id:'bp', title:'Custom Event DoCRUD', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'insert', title:'Database Execute', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'query',label:'Query',type:'string',side:'input',value:'"INSERT OR REPLACE INTO..."'},
+      {id:'params',label:'Params',type:'array',side:'input'},
+      {id:'ret',label:'Success',type:'bool',side:'output'}
+    ]},
+    { id:'select', title:'Database Select', style:'function', x:600, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'query',label:'Query',type:'string',side:'input',value:'"SELECT * FROM PlayerData..."'},
+      {id:'params',label:'Params',type:'array',side:'input'},
+      {id:'ret',label:'Results',type:'array',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'insert',pin:'ei'}},
+    {from:{node:'insert',pin:'eo'},to:{node:'select',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Insert a player record
+Database.Execute(
+    'INSERT OR REPLACE INTO PlayerData (PlayerID, PlayerName, Score) VALUES (?, ?, ?)',
+    { 'p01', 'PlayerOne', 0 }
+)
+
+-- Select a player by ID
+local results = Database.Select(
+    'SELECT PlayerName, Score FROM PlayerData WHERE PlayerID = ?',
+    { 'p01' }
+)
+
+for _, row in ipairs(results) do
+    print(row.Columns.PlayerName, row.Columns.Score)
+end
+
+-- Update a player's score
+Database.Execute(
+    'UPDATE PlayerData SET Score = Score + 100 WHERE PlayerID = ?',
+    { 'p01' }
+)
+
+-- Delete a player record (async)
+Database.ExecuteAsync(
+    'DELETE FROM PlayerData WHERE PlayerID = ?',
+    { 'p01' },
+    function(success)
+        print("Deleted:", success)
+    end
+)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Database CRUD operations follow the same SQL pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+### Async Select
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Async Database Select"
+  nodes={[
+    { id:'bp', title:'Custom Event DoAsyncQuery', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'async', title:'Database Select Async', style:'function', x:330, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'done',label:'On Complete',type:'exec',side:'output'},
+      {id:'query',label:'Query',type:'string',side:'input',value:'"SELECT * FROM PlayerData"'},
+      {id:'params',label:'Params',type:'array',side:'input'},
+      {id:'rows',label:'Rows',type:'array',side:'output'}
+    ]},
+    { id:'loop', title:'For Each Loop', style:'macro', x:630, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'body',label:'Loop Body',type:'exec',side:'output'},
+      {id:'done',label:'Completed',type:'exec',side:'output'},
+      {id:'arr',label:'Array',type:'array',side:'input'},
+      {id:'elem',label:'Array Element',type:'wildcard',side:'output'},
+      {id:'idx',label:'Array Index',type:'int',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'async',pin:'ei'}},
+    {from:{node:'async',pin:'done'},to:{node:'loop',pin:'ei'}},
+    {from:{node:'async',pin:'rows'},to:{node:'loop',pin:'arr'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Async query that does not block the game thread
+Database.SelectAsync('SELECT * FROM PlayerData', {}, function(rows)
+    for _, row in ipairs(rows) do
+        print("Player:", row.Columns.PlayerName)
+    end
+end)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+:::warning
+Never store database credentials in source code. Use the server configuration file to manage connection secrets.
+:::

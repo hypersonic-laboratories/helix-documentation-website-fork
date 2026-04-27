@@ -1,0 +1,226 @@
+---
+title: "Events System"
+sidebar_position: 6
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Events System
+
+HELIX has a built-in event system that lets different parts of your code communicate without tight coupling. Events work across client and server, so a server-side script can fire an event that a client catches (and vice versa).
+
+In **Blueprints**, you use UE5's native Event Dispatchers and Custom Events — the standard Unreal approach. In **Lua**, HELIX provides a custom event API (global functions like [`RegisterServerEvent`](/api/classes/events), [`TriggerClientEvent`](/api/classes/events), etc.) that wraps native C++/Blueprint functionality into a simple scripting interface. **JavaScript** event support via HelixJS is currently in development.
+
+## Registering Events
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Registering an Event Dispatcher"
+
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:20, y:60, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'bind', title:'Bind Event to OnPlayerScored', style:'function', x:260, y:60, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'evt',label:'Event',type:'delegate',side:'input'}
+    ]},
+    { id:'ce', title:'OnScoreReceived', style:'event', x:20, y:180, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'del',label:'',type:'delegate',side:'output'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:560, y:180, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Score received!"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'bind',pin:'ei'}},
+    {from:{node:'ce',pin:'del'},to:{node:'bind',pin:'evt'}},
+    {from:{node:'ce',pin:'eo'},to:{node:'ps',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Register a server-side event handler
+RegisterServerEvent("PlayerScored", function(controller, playerId, points)
+    -- controller is the triggering player (passed automatically)
+    print("Player " .. playerId .. " scored " .. points .. " points!")
+end)
+
+-- Register a client-side event handler
+RegisterClientEvent("UpdateScoreUI", function(playerId, points)
+    print("UI update: " .. playerId .. " now has " .. points)
+end)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+:::info Coming Soon
+The HelixJS event API (`Helix.on`, `Helix.emit`) is currently in development. JavaScript event support will be available in a future update. For now, use Lua or Blueprints for event-driven communication.
+:::
+
+</TabItem>
+</Tabs>
+
+## Triggering Events
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Calling an Event Dispatcher"
+
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:20, y:60, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'call', title:'Call OnPlayerScored', style:'function', x:280, y:60, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'id',label:'Player Id',type:'string',side:'input',value:'"player_42"'},
+      {id:'pts',label:'Points',type:'int',side:'input',value:'100'}
+    ]}
+  ]}
+  wires={[{from:{node:'bp',pin:'eo'},to:{node:'call',pin:'ei'}}]}
+/>
+
+For cross-network events, use the scripting layer (Lua/JS).
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Client → Server: trigger a server event from the client
+TriggerServerEvent("PlayerScored", "player_42", 100)
+
+-- Server → Specific Client: send to one player
+TriggerClientEvent(controller, "UpdateScoreUI", "player_42", 100)
+
+-- Server → All Clients: broadcast to everyone
+BroadcastEvent("UpdateScoreUI", "player_42", 100)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+:::info Coming Soon
+JavaScript event triggering via HelixJS is in development.
+:::
+
+</TabItem>
+</Tabs>
+
+## Built-in Game Events
+
+HELIX fires these events automatically. Subscribe to them to react to core game moments:
+
+| Event | Context | Description |
+|---|---|---|
+| `HEvent:PlayerReady` | Server | A player has loaded and is ready |
+| `HEvent:PlayerUnloaded` | Server | A player disconnects |
+| `HEvent:CharacterSpawned` | Server | A character has been spawned |
+
+:::note
+The built-in event names and signatures may evolve during the Closed Alpha. Check the reference documentation for the latest list.
+:::
+
+## Custom Events
+
+Define your own events for game-specific logic. Pick a name and go:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Custom Event Dispatcher"
+
+  nodes={[
+    { id:'ce', title:'StartWave', style:'event', x:20, y:60, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'wave',label:'Wave Number',type:'int',side:'output'}
+    ]},
+    { id:'spawn', title:'Spawn Zombies', style:'function', x:260, y:60, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'count',label:'Count',type:'int',side:'input'}
+    ]},
+    { id:'call', title:'Call OnZombieWaveStarted', style:'function', x:540, y:60, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'wave',label:'Wave Number',type:'int',side:'input'},
+      {id:'count',label:'Zombie Count',type:'int',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'ce',pin:'eo'},to:{node:'spawn',pin:'ei'}},
+    {from:{node:'spawn',pin:'eo'},to:{node:'call',pin:'ei'}},
+    {from:{node:'ce',pin:'wave'},to:{node:'call',pin:'wave'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Start a zombie wave and tell all clients about it
+function M:StartWave(waveNumber)
+    local count = waveNumber * 10
+    self:SpawnZombies(count)
+    BroadcastEvent("ZombieWaveStarted", waveNumber, count)
+end
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+:::info Coming Soon
+JavaScript custom events via HelixJS are in development.
+:::
+
+</TabItem>
+</Tabs>
+
+## Cross-Package Events
+
+Events are great for cross-package communication. Use local events to communicate between packages on the same side (client-to-client or server-to-server):
+
+```lua
+-- Package A (server): notify other server packages
+TriggerLocalServerEvent("InventoryUpdated", playerId, inventoryData)
+
+-- Package B (server): listen for cross-package events
+RegisterServerEvent("InventoryUpdated", function(controller, playerId, data)
+    -- Update your systems
+end)
+```
+
+## Lua Event API Summary
+
+These are global functions available in Lua scripts. They wrap HELIX's native C++ event system into a simple scripting interface.
+
+| Function | Direction | Description |
+|---|---|---|
+| `RegisterServerEvent(name, cb)` | Server | Register a server event handler |
+| `RegisterClientEvent(name, cb)` | Client | Register a client event handler |
+| `TriggerServerEvent(name, ...)` | Client → Server | Trigger a server event from the client |
+| `TriggerClientEvent(ctrl, name, ...)` | Server → Client | Send event to a specific client |
+| `TriggerLocalServerEvent(name, ...)` | Server → Server | Cross-package server event |
+| `TriggerLocalClientEvent(name, ...)` | Client → Client | Cross-package client event |
+| `BroadcastEvent(name, ...)` | Server → All Clients | Send event to all connected clients |
+
+:::tip
+When triggering a server event from a client, the triggering player's controller is automatically passed as the first argument to the server handler (similar to FiveM's `source`). You don't need to send it manually.
+:::
+
+The event system serializes arguments automatically across the network. Stick to primitive types (strings, numbers, booleans) and simple tables/objects for the smoothest experience.

@@ -1,0 +1,240 @@
+---
+title: "Enums Reference"
+sidebar_position: 1
+---
+
+# Enums Reference
+
+This page lists all enumeration types available in the HELIX API. Enums are used as parameters in many class methods to specify modes, types, and behaviors.
+
+---
+
+## LightType
+
+Specifies which type of light actor to spawn when using the `Light(...)` API.
+
+| Value | Description |
+|---|---|
+| `LightType.Point` | A point light that emits in all directions. |
+| `LightType.Spot` | A spotlight with a focused cone shape. |
+| `LightType.Rect` | A rectangular area light (like a panel). |
+
+## TraceMode
+
+Flags that customize trace behavior in raycasting and overlap queries.
+
+| Value | Description |
+|---|---|
+| `TraceMode.DrawDebug` | Visually draws the trace line. |
+| `TraceMode.TraceComplex` | Traces against complex (per-poly) collision. |
+| `TraceMode.ReturnPhysicalMaterial` | Includes surface material info in results. |
+| `TraceMode.ReturnEntity` | Includes any hit entity reference. |
+| `TraceMode.ReturnNames` | Returns Actor, Component, and Bone names. |
+| `TraceMode.ReturnUV` | Returns UV coordinate of the hit point. |
+
+## CollisionChannel
+
+Channels used to filter collision and trace checks.
+
+| Value | Description |
+|---|---|
+| `CollisionChannel.WorldStatic` | Static map geometry (e.g., buildings, terrain). |
+| `CollisionChannel.WorldDynamic` | Movable objects and props. |
+| `CollisionChannel.Pawn` | Character capsule collisions. |
+| `CollisionChannel.PhysicsBody` | Physics-enabled bodies and pickable items. |
+| `CollisionChannel.Mesh` | Character skeletal mesh. |
+| `CollisionChannel.Vehicle` | Vehicle hitboxes and physics. |
+| `CollisionChannel.Water` | Water bodies or volumes. |
+| `CollisionChannel.Foliage` | Grass, bushes, and other foliage. |
+
+## AttachmentRule
+
+Rules that define how objects attach and maintain transforms.
+
+| Value | Description |
+|---|---|
+| `AttachmentRule.KeepRelative` | Keeps relative transform when attaching. |
+| `AttachmentRule.KeepWorld` | Maintains world transform. |
+| `AttachmentRule.SnapToTarget` | Snaps directly to target's transform. |
+
+## DetachmentRule
+
+Rules that define how objects detach and maintain transforms.
+
+| Value | Description |
+|---|---|
+| `DetachmentRule.KeepRelative` | Keeps relative transform when detaching. |
+| `DetachmentRule.KeepWorld` | Maintains world transform. |
+
+## ConstraintMotion
+
+Used in physics constraints to restrict axis movement.
+
+| Value | Description |
+|---|---|
+| `ConstraintMotion.Free` | Axis is fully free. |
+| `ConstraintMotion.Limited` | Axis is restricted to a range. |
+| `ConstraintMotion.Locked` | Axis is completely locked. |
+
+## WeatherType
+
+Predefined weather presets compatible with Ultra Dynamic Sky. Use with `SetWeather(...)` to apply different weather conditions.
+
+| Value | Description |
+|---|---|
+| `WeatherType.ClearSkies` | No clouds or weather effects. |
+| `WeatherType.PartlyCloudy` | Scattered clouds with sunlight. |
+| `WeatherType.Cloudy` | Overcast sky, no rain. |
+| `WeatherType.Overcast` | Dense cloud cover, darker lighting. |
+| `WeatherType.Foggy` | Low visibility due to fog. |
+| `WeatherType.RainLight` | Light rain effect. |
+| `WeatherType.Rain` | Steady moderate rainfall. |
+| `WeatherType.RainThunderstorm` | Heavy rain with thunder and lightning. |
+| `WeatherType.SnowLight` | Light snowfall. |
+| `WeatherType.Snow` | Normal snow accumulation. |
+| `WeatherType.SnowBlizzard` | Strong snowstorm with wind. |
+| `WeatherType.SandDustCalm` | Light sand/dust in the air. |
+| `WeatherType.SandDustStorm` | Heavy dust storm conditions. |
+
+## NotificationType
+
+Controls the style of in-game notification popups.
+
+| Value | Description |
+|---|---|
+| `NotificationType.Success` | Green success notification with a tick. |
+| `NotificationType.Error` | Red error notification with a cross. |
+| `NotificationType.Info` | Blue information notification with an info symbol. |
+| `NotificationType.Update` | Turquoise download update notification. |
+
+## FontType
+
+Built-in engine fonts available for use with `TextBlock:SetFont(...)` or other UI elements.
+
+| Value | Description |
+|---|---|
+| `FontType.Roboto` | Standard sans-serif font. |
+| `FontType.RobotoMono` | Monospaced version of Roboto, good for code and numeric text. |
+| `FontType.RobotoDistanceField` | Distance field version for scalable text. |
+
+## TriggerType
+
+Shape types used when creating [Trigger](../classes/trigger.mdx) volumes.
+
+| Value | Description |
+|---|---|
+| `TriggerType.Sphere` | Spherical trigger volume. |
+| `TriggerType.Box` | Box-shaped trigger volume. |
+| `TriggerType.Capsule` | Capsule-shaped trigger, ideal for characters. |
+
+## AnimationSlotType
+
+Specifies which animation slot group to play animations in on a [Character](../classes/character.mdx).
+
+| Value | Description |
+|---|---|
+| `AnimationSlotType.FullBody` | Plays in the full-body slot, overriding all movement. |
+| `AnimationSlotType.UpperBody` | Plays only in the upper-body slot, allowing legs to animate independently. |
+
+## BlendMode
+
+Specifies how a material blends with the background.
+
+| Value | Description |
+|---|---|
+| `BlendMode.Opaque` | No transparency. Fully solid. |
+| `BlendMode.Masked` | Hard cutoff using an opacity mask. |
+| `BlendMode.Translucent` | Smooth transparency. |
+| `BlendMode.Additive` | Adds light values to background -- good for effects. |
+| `BlendMode.Modulate` | Multiplies source and dest -- rarely used. |
+| `BlendMode.MaskedDistanceField` | Used with distance field materials for cutouts. |
+| `BlendMode.MaskedDistanceFieldShadowed` | Same as above but allows shadows. |
+| `BlendMode.TranslucentDistanceField` | Translucent with distance field. |
+| `BlendMode.TranslucentDistanceFieldShadowed` | Translucent + distance field + shadows. |
+| `BlendMode.AlphaComposite` | Composites using alpha channels. |
+| `BlendMode.AlphaHoldout` | Uses alpha to mask out content. |
+| `BlendMode.AlphaBlend` | Blends two materials using alpha. |
+| `BlendMode.TranslucentAlphaOnly` | Writes only alpha. |
+| `BlendMode.TranslucentAlphaOnlyWriteAlpha` | Writes only alpha, not color. |
+
+## CCDMode
+
+Controls Continuous Collision Detection for moving objects.
+
+| Value | Description |
+|---|---|
+| `CCDMode.Auto` | Automatically enables CCD when needed. |
+| `CCDMode.Disabled` | Disables CCD entirely. |
+| `CCDMode.Enabled` | Forces CCD for this object. |
+
+## CollisionType
+
+Defines general collision behavior when spawning or simulating actors.
+
+| Value | Description |
+|---|---|
+| `CollisionType.Normal` | Standard collision based on channel settings. |
+| `CollisionType.StaticOnly` | Only collides with static objects. |
+| `CollisionType.NoCollision` | Ignores all collisions. |
+| `CollisionType.IgnoreOnlyPawn` | Ignores players and NPCs, but collides with everything else. |
+| `CollisionType.Auto` | Chooses the best setting automatically. |
+
+## AttenuationFunction
+
+Defines how audio or light falloff behaves over distance.
+
+| Value | Description |
+|---|---|
+| `AttenuationFunction.Linear` | Linear drop-off. |
+| `AttenuationFunction.Logarithmic` | Logarithmic curve, most natural. |
+| `AttenuationFunction.Inverse` | Slower drop-off near the source. |
+| `AttenuationFunction.LogReverse` | Reverse-log for unusual effects. |
+| `AttenuationFunction.NaturalSound` | Optimized for spatialized audio. |
+
+## AttenuationShape
+
+Defines the shape of a sound or light attenuation volume.
+
+| Value | Description |
+|---|---|
+| `AttenuationShape.Sphere` | Omnidirectional sphere. |
+| `AttenuationShape.Capsule` | Capsule shape, elongated along one axis. |
+| `AttenuationShape.Box` | Box-shaped volume. |
+| `AttenuationShape.Cone` | Directional cone shape. |
+
+## DoorType
+
+Defines door animation types.
+
+| Value | Description |
+|---|---|
+| `DoorType.Classic` | Standard door. |
+| `DoorType.Swinging` | Double-swing door. |
+| `DoorType.Sliding` | Sliding door, like store doors. |
+| `DoorType.Garage` | Garage-like door, based on the sliding door. |
+
+## SceneCaptureSource
+
+Specifies what render data a scene capture outputs to its render target.
+
+| Value | Description |
+|---|---|
+| `SceneCaptureSource.FinalColorLDR` | Final color with tone mapping (most common). |
+| `SceneCaptureSource.FinalColorHDR` | Final color without tone mapping. |
+| `SceneCaptureSource.SceneColorHDR` | Scene color before post-processing. |
+| `SceneCaptureSource.SceneDepth` | Scene depth buffer. |
+| `SceneCaptureSource.DeviceDepth` | Device depth buffer. |
+| `SceneCaptureSource.Normal` | World space normals. |
+| `SceneCaptureSource.BaseColor` | Base color only. |
+
+## XrayState
+
+Specifies the current X-ray interaction state for a target actor.
+
+| Value | Description |
+|---|---|
+| `XrayState.None` | No X-ray interaction active. |
+| `XrayState.BeginFocus` | Player has started focusing on the target. |
+| `XrayState.EndFocus` | Player has stopped focusing on the target. |
+| `XrayState.Reveal` | Player has released X-ray key whilst target is in focus. |
+| `XrayState.Cancel` | X-ray interaction has been cancelled. |

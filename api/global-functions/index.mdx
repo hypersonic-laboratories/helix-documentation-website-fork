@@ -1,0 +1,166 @@
+---
+title: "Global Functions"
+sidebar_position: 1
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Global Functions
+
+HELIX provides a library of globally available utility functions that can be called from any Lua script context. These cover world management, player queries, pawn queries, vehicle management, entity manipulation, and distance calculations.
+
+---
+
+## World Functions
+
+| Function | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetHUDVisibility` | `Aspects: table` | `void` | Sets the visibility of HUD aspects. The table can include keys: `Healthbar`, `Inventory`, `Speedometer`, `WeaponState`, `Shortcuts` (all boolean). |
+
+## Player Functions
+
+| Function | Parameters | Return Type | Description |
+|---|---|---|---|
+| `GetAllPlayers` | -- | `APlayerController[]` | Returns a table of all player controllers currently in the world. |
+| `GetPlayerPawn` | `Player?: APlayerController` | `APawn` | Returns the pawn controlled by a player controller. If no player is specified, returns the local player's pawn. |
+| `GetLocalPlayer` | -- | `APlayerController` | Returns the local player controller. |
+| `GetPlayersInArea` | `Coords: Vector`, `Radius?: number` | `APlayerController[]` | Returns all players within a specified radius of the given coordinates. |
+| `GetClosestPlayer` | `Coords: Vector`, `Radius?: number` | `APlayerController, number` | Returns the nearest player controller and the distance to them, or `nil` if none found. |
+
+## Pawn Functions
+
+| Function | Parameters | Return Type | Description |
+|---|---|---|---|
+| `GetAllPawns` | -- | `table` | Returns an array of all character pawns currently in the world. |
+| `GetPawnsInArea` | `Coords: Vector`, `Radius?: number` | `table` | Returns all pawns within a specified radius. |
+| `GetClosestPawn` | `Coords: Vector`, `Radius?: number` | `APawn, number` | Returns the nearest pawn and distance, or `nil` if none found. |
+| `IsPedInAnyVehicle` | `Pawn: APawn` | `boolean` | Returns `true` if the pawn is currently inside a vehicle. |
+| `GetVehiclePedIsIn` | `Pawn: APawn` | `AVehicle` or `nil` | Returns the vehicle the pawn is in, or `nil` if not in a vehicle. |
+
+## Vehicle Functions
+
+| Function | Parameters | Return Type | Description |
+|---|---|---|---|
+| `GetAllVehicles` | -- | `HVehicle[]` | Returns an array of all vehicles currently in the world. |
+| `GetVehiclesInArea` | `Coords: Vector`, `Radius?: number` | `HVehicle[]` | Returns all vehicles within a specified radius. |
+| `GetClosestVehicle` | `Coords: Vector`, `Radius?: number` | `HVehicle, number` | Returns the nearest vehicle and distance, or `nil` if none found. |
+| `ClearAreaOfVehicles` | `Coords: Vector`, `Radius?: number` | `void` | Destroys all vehicles within a specified radius. |
+| `IsAreaClearOfVehicles` | `Coords: Vector`, `Radius?: number` | `boolean` | Returns `true` if no vehicles are in the area. |
+| `DeleteVehicle` | `Vehicle: HVehicle` | `boolean` | Destroys a specific vehicle. Returns `true` on success. |
+
+## Entity Functions
+
+| Function | Parameters | Return Type | Description |
+|---|---|---|---|
+| `GetEntityCoords` | `Entity: AActor` | `Vector` | Returns the world location of an entity. |
+| `GetEntityRotation` | `Entity: AActor` | `Rotator` | Returns the world rotation of an entity. |
+| `GetEntityHeading` | `Entity: AActor` | `number` | Returns the yaw rotation (heading) of an entity in degrees. |
+| `SetEntityCoords` | `Entity: AActor`, `Coords: Vector` | `void` | Teleports an entity to the specified world location. |
+| `SetEntityRotation` | `Entity: AActor`, `Rotation: Rotator` | `void` | Sets the world rotation of an entity. |
+| `SetEntityHeading` | `Entity: AActor`, `Heading: number` | `void` | Sets the yaw rotation (heading) of an entity in degrees. |
+| `DeleteEntity` | `Entity: AActor` | `void` | Destroys an entity, removing it from the world. |
+| `DoesEntityExist` | `Entity: AActor` | `boolean` | Returns `true` if the entity is valid and exists in the world. |
+| `AttachActorToActor` | `Actor: AActor`, `TargetActor: AActor`, `Location?: Vector`, `Rotation?: Rotator`, `Socket?: string`, `AttachmentRules?: table`, `bDisableCollision?: boolean` | `boolean` | Attaches an actor to another actor, optionally at a named socket. |
+| `AttachActorToComponent` | `Actor: AActor`, `TargetComponent: USceneComponent`, `Location?: Vector`, `Rotation?: Rotator`, `Socket?: string`, `AttachmentRules?: table`, `bDisableCollision?: boolean` | `boolean` | Attaches an actor to a scene component, optionally at a named socket. |
+| `DetachActor` | `Actor: AActor`, `DetachmentRules?: table` | `void` | Detaches an actor from any parent. |
+
+## Distance Functions
+
+| Function | Parameters | Return Type | Description |
+|---|---|---|---|
+| `GetDistanceBetweenCoords` | `Coords1: Vector`, `Coords2: Vector` | `number` | Returns the distance between two world positions. |
+| `GetDistanceBetweenActors` | `Actor1: AActor`, `Actor2: AActor` | `number` or `nil` | Returns the distance between two actors, or `nil` if either is invalid. |
+
+---
+
+## Examples
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Get All Players and Closest Player"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'getall', title:'Get All Players', style:'function', x:280, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'ret',label:'Return Value',type:'array',side:'output'}
+    ]},
+    { id:'loop', title:'For Each Loop', style:'macro', x:530, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'body',label:'Loop Body',type:'exec',side:'output'},
+      {id:'done',label:'Completed',type:'exec',side:'output'},
+      {id:'arr',label:'Array',type:'array',side:'input'},
+      {id:'elem',label:'Array Element',type:'object',side:'output'},
+      {id:'idx',label:'Array Index',type:'int',side:'output'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:800, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Player Controller"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'getall',pin:'ei'}},
+    {from:{node:'getall',pin:'eo'},to:{node:'loop',pin:'ei'}},
+    {from:{node:'getall',pin:'ret'},to:{node:'loop',pin:'arr'}},
+    {from:{node:'loop',pin:'body'},to:{node:'ps',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Get all players in the server
+local players = GetAllPlayers()
+for _, pc in ipairs(players) do
+    print("Player controller:", pc)
+end
+
+-- Get closest player to a location
+local closest, dist = GetClosestPlayer(Vector(0, 0, 0), 5000)
+if closest then
+    print("Closest player is " .. tostring(dist) .. " units away")
+end
+
+-- Get entity location and heading
+local pawn = GetPlayerPawn()
+local coords = GetEntityCoords(pawn)
+local heading = GetEntityHeading(pawn)
+
+-- Teleport an entity
+SetEntityCoords(pawn, Vector(1000, 2000, 100))
+
+-- Check if a pawn is in a vehicle
+if IsPedInAnyVehicle(pawn) then
+    local veh = GetVehiclePedIsIn(pawn)
+    print("In vehicle:", veh)
+end
+
+-- Get distance between two points
+local dist = GetDistanceBetweenCoords(Vector(0, 0, 0), Vector(300, 400, 0))
+print("Distance:", dist)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+:::note
+These global functions are designed to provide a familiar scripting experience for FiveM and GTA Online developers migrating to HELIX. Function names follow similar conventions where applicable.
+:::

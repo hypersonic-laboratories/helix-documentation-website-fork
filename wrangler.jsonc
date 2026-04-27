@@ -1,4 +1,4 @@
-{
+﻿{
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "helix-documentation-website-fork",
   "compatibility_date": "2026-04-23",
@@ -6,7 +6,7 @@
     "enabled": true
   },
   "assets": {
-    "directory": "site"
+    "directory": "build"
   },
   "compatibility_flags": [
     "nodejs_compat"

@@ -1,0 +1,212 @@
+---
+title: "Events"
+sidebar_position: 5
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Events
+
+The **Events** system is the primary communication mechanism in HELIX. It enables structured data transfer between the client and server using global registration and triggering functions. Events support strings, numbers, booleans, `nil`, vectors, and tables as arguments.
+
+:::tip
+The triggering controller is passed automatically as the first parameter when a client triggers a server event -- similar to how `source` is passed in FiveM.
+:::
+
+---
+
+## Core Functions
+
+| Function | Parameters | Authority | Description |
+|---|---|---|---|
+| `RegisterClientEvent` | `name: string`, `callback: function` | **Client** | Registers a client-side event handler. Called when the server triggers an event targeted at this client. |
+| `RegisterServerEvent` | `name: string`, `callback: function` | **Server** | Registers a server-side event handler. The triggering player controller is automatically passed as the first argument. |
+| `TriggerClientEvent` | `controller: PlayerController`, `name: string`, `...args: any` | **Server** | Sends an event from the server to a specific client. All extra arguments are serialized and passed to the client handler. |
+| `TriggerLocalClientEvent` | `name: string`, `...args: any` | **Client** | Sends an event from a client script to another client-side Lua package on the same client. |
+| `TriggerServerEvent` | `name: string`, `...args: any` | **Client** | Sends an event from the client to the server. The triggering controller is passed automatically as the first argument to the server handler. |
+| `TriggerLocalServerEvent` | `name: string`, `...args: any` | **Server** | Sends an event from a server script to another server-side Lua package, enabling cross-package communication without client involvement. |
+| `BroadcastEvent` | `name: string`, `...args: any` | **Server** | Sends an event from the server to all connected clients. |
+
+---
+
+## Examples
+
+### Registering and Triggering Events
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Register and Trigger Client Event"
+  nodes={[
+    { id:'evt', title:'Event Dispatcher TestClient', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'String',type:'string',side:'output'},
+      {id:'num',label:'Number',type:'float',side:'output'},
+      {id:'bool',label:'Boolean',type:'bool',side:'output'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:350, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'evt',pin:'eo'},to:{node:'ps',pin:'ei'}},
+    {from:{node:'evt',pin:'str'},to:{node:'ps',pin:'str'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- CLIENT SCRIPT: Register a client event
+RegisterClientEvent('TestClient', function(str, num, bool, nil_val, vec, tbl)
+    print('CLIENT TestClient EVENT')
+    print('  String:', str, 'Type:', type(str))
+    print('  Number:', num, 'Type:', type(num))
+    print('  Boolean:', bool, 'Type:', type(bool))
+    print('  Vector:', vec, 'Type:', type(vec))
+    print('  Table:', tbl, 'Type:', type(tbl))
+end)
+
+-- CLIENT SCRIPT: Trigger a server event from the client
+TriggerServerEvent('TestServer', 'Hello from Client', 100, true, nil, Vector(100, 100, 100), { key = 'value' })
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Client-side event registration and triggering follows
+// the same pattern in JavaScript.
+// Refer to the Lua examples for the function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+### Server-Side Event Handling
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Server Event Handler with Response"
+  nodes={[
+    { id:'evt', title:'Event Dispatcher TestServer', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'ctrl',label:'Controller',type:'object',side:'output'},
+      {id:'str',label:'String',type:'string',side:'output'},
+      {id:'num',label:'Number',type:'float',side:'output'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:350, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input'}
+    ]},
+    { id:'trigger', title:'Trigger Client Event', style:'function', x:620, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'ctrl',label:'Controller',type:'object',side:'input'},
+      {id:'name',label:'Event Name',type:'string',side:'input',value:'"TestClient"'},
+      {id:'args',label:'Args',type:'wildcard',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'evt',pin:'eo'},to:{node:'ps',pin:'ei'}},
+    {from:{node:'evt',pin:'str'},to:{node:'ps',pin:'str'}},
+    {from:{node:'ps',pin:'eo'},to:{node:'trigger',pin:'ei'}},
+    {from:{node:'evt',pin:'ctrl'},to:{node:'trigger',pin:'ctrl'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- SERVER SCRIPT: Register a server event
+RegisterServerEvent('TestServer', function(controller, str, num, bool, nil_val, vec, tbl)
+    print('SERVER TestServer EVENT from', controller)
+    print('  String:', str)
+    print('  Number:', num)
+
+    -- Send a response back to the triggering client
+    TriggerClientEvent(controller, 'TestClient', str, num, bool, nil_val, vec, tbl)
+end)
+
+-- SERVER SCRIPT: Broadcast to all clients
+BroadcastEvent('myClientEvent', 100)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Server-side event registration follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+### Cross-Package Communication
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Cross-Package Event Communication"
+  nodes={[
+    { id:'bp', title:'Custom Event SendLocal', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'local', title:'Trigger Local Client Event', style:'function', x:330, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'name',label:'Event Name',type:'string',side:'input',value:'"TestClient"'},
+      {id:'args',label:'Args',type:'wildcard',side:'input',value:'"Hello"'}
+    ]},
+    { id:'server', title:'Trigger Local Server Event', style:'function', x:630, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'name',label:'Event Name',type:'string',side:'input',value:'"TestServer"'},
+      {id:'args',label:'Args',type:'wildcard',side:'input',value:'"Cross-package data"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'local',pin:'ei'}},
+    {from:{node:'local',pin:'eo'},to:{node:'server',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- CLIENT: Trigger a local client event (client -> client, same machine)
+TriggerLocalClientEvent('TestClient', "Hello", 100, true, nil, Vector(100, 100, 100), { value = 42 })
+
+-- SERVER: Trigger a local server event (server -> server, cross-package)
+TriggerLocalServerEvent('TestServer', 'Cross-package data', 100, true, nil, Vector(100, 100, 100), { key = 'value' })
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Local event triggering follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+:::caution
+Events send data over the network. Supported argument types include strings, numbers, booleans, `nil`, vectors, and tables. Function references and complex objects cannot be sent remotely.
+:::

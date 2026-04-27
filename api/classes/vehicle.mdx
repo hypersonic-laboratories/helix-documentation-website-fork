@@ -1,0 +1,262 @@
+---
+title: "Vehicle"
+sidebar_position: 3
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Vehicle (HVehicle)
+
+The **HVehicle** class allows you to spawn a vehicle actor in the world and perform logical actions through class methods. This class also provides getter methods for obtaining data relating to specific vehicle actors. It supports input control, engine management, fuel systems, lights, sirens, and state queries.
+
+---
+
+## Constructor
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Spawn Vehicle (Server)"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'spawn', title:'Spawn Actor from Class', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'class',label:'Class',type:'class',side:'input',value:'HVehicle'},
+      {id:'transform',label:'Spawn Transform',type:'transform',side:'input'},
+      {id:'ret',label:'Return Value',type:'object',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'spawn',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Spawn a vehicle at a given location
+local vehicle = HVehicle(
+    Vector(-7940, 3400, 150),                -- location
+    Rotator(0, 180, 0),                      -- rotation
+    '/Game/Vehicles/BP_MyCar.BP_MyCar_C',    -- blueprint asset path
+    'QueryAndPhysics',                       -- collision type
+    true                                     -- gravity enabled
+)
+
+vehicle:SetFuel(1.0)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for constructor parameters.
+```
+
+</TabItem>
+</Tabs>
+
+### Constructor Parameters
+
+| Type | Name | Default | Description |
+|---|---|---|---|
+| `Vector` | `Location` | -- | The location to spawn the vehicle at. |
+| `Rotator` | `Rotation` | -- | The orientation of the vehicle. |
+| `string` | `BlueprintAsset` | -- | Long package name for the vehicle Blueprint (e.g., `"/Game/Vehicles/BP_MyCar.BP_MyCar_C"`). |
+| `string` | `CollisionType` | `"QueryAndPhysics"` | One of `"NoCollision"`, `"QueryOnly"`, `"PhysicsOnly"`, `"QueryAndPhysics"`. |
+| `boolean` | `GravityEnabled` | `true` | Whether physics gravity is enabled. |
+
+The constructor returns a table with `.Object` (vehicle actor) and `.Movement` (`UModularMovementComponent`).
+
+---
+
+## Methods
+
+### Input Control
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetThrottleInput` | `value: number` | `void` | Sets the throttle input (typically `0.0` or `1.0`). |
+| `SetSteeringInput` | `value: number` | `void` | Sets steering input (`-1.0` full left to `1.0` full right). |
+| `SetBrakeInput` | `value: number` | `void` | Sets brake input (`0.0` to `1.0`). |
+| `SetHandBrakeInput` | `enabled: boolean` | `void` | Enables or disables the handbrake. |
+| `Horn` | `state: boolean` | `void` | Sets the horn state (`true` to honk). |
+
+### Engine Control
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `HoldStarter` | `startTime: number` | `void` | Holds the engine starter for a specified duration in seconds. |
+| `ReleaseStarter` | -- | `void` | Releases the engine starter. |
+| `StopEngine` | -- | `void` | Stops the engine. |
+| `SetEngineHealth` | `health: number` | `void` | Sets the engine health (`0.0` destroyed to `1.0` full). |
+| `GetEngineHealth` | -- | `number` or `nil` | Gets the engine health (`0.0` to `1.0`), or `nil` if movement component is missing. |
+
+### Fuel System
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `AddFuel` | `amount: number` | `void` | Adds fuel to the vehicle's current fuel level (`0.0` to `1.0` scale). |
+| `SetFuel` | `amount: number` | `void` | Sets the fuel level (`0.0` to `1.0`). |
+| `GetFuelRatio` | -- | `number` | Gets the current fuel ratio (`0.0` to `1.0`). |
+
+### State Queries
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `IsInReverse` | -- | `boolean` | Returns `true` if the vehicle is in reverse gear. |
+| `GetRPMRatio` | -- | `number` | Gets the normalized engine RPM (`0.0` to `1.0`). |
+| `GetNumberOfWheels` | -- | `integer` | Returns the total number of wheels. |
+| `GetNumberOfWheelsTouchingGround` | -- | `integer` | Returns how many wheels are touching the ground. |
+| `GetNumberOfDriveWheelsTouchingGround` | -- | `integer` | Returns how many drive wheels are touching the ground. |
+| `GetMassPerWheel` | -- | `number` | Returns the mass per wheel. |
+| `IsBraking` | -- | `boolean` | Returns `true` if the vehicle is currently braking. |
+
+### Sleep and Airborne
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetCanSleep` | `enabled: boolean` | `void` | Controls whether the vehicle can go to sleep (physics idle). |
+| `SetSleeping` | `enabled: boolean` | `void` | Forces the vehicle into or out of sleeping state. |
+| `ApplyAirbornePhysics` | -- | `void` | Applies airborne physics behavior once (used when the vehicle is in the air). |
+
+### Lights and Sirens
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetRightIndicator` | `NewState: boolean` | `void` | Sets the right indicator/blinker state. |
+| `SetLeftIndicator` | `NewState: boolean` | `void` | Sets the left indicator/blinker state. |
+| `SetReverseLight` | `NewState: boolean` | `void` | Sets the reverse light state. |
+| `SetBrakeLight` | `NewState: boolean` | `void` | Sets the brake light state. |
+| `SetHazardLight` | `NewState: boolean` | `void` | Sets the hazard lights state. |
+| `SetRedLightIntensity` | `Value: number` | `void` | Sets the red light intensity (e.g., emergency light). |
+| `SetLightsEmissiveStrength` | `Value: number` | `void` | Sets overall light emissive strength. |
+| `SetIndicatorLightsIntensity` | `Value: number` | `void` | Sets indicator light intensity. |
+| `SetIndicatorAnimationSpeed` | `Value: number` | `void` | Sets indicator blink animation speed. |
+| `SetSirenState` | `state: boolean` | `void` | Toggles the siren state. |
+| `SetSirenEmissionStrength` | `Amount: number` | `void` | Sets siren light emission strength. |
+| `SetSirenRedColor` | `NewColor: LinearColor` | `void` | Sets the siren red color. |
+| `SetSirenBlueColor` | `NewColor: LinearColor` | `void` | Sets the siren blue color. |
+| `SetSirenBaseColor` | `NewColor: LinearColor` | `void` | Sets the siren base color. |
+| `SetSirenAnimationSpeed` | `Speed: number` | `void` | Sets the siren animation speed. |
+
+### Setup and Data Access
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `GetSetup` | -- | `UModularVehicleData` or `nil` | Returns the vehicle's setup data. |
+| `GetWheels` | -- | `table` | Returns an array of `UModularWheel` objects. |
+| `UpdateComponents` | `additionalWheels: table` | `void` | Updates vehicle components with additional wheels. |
+
+### AI and Navigation
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `RequestDirectMove` | `moveVelocity: Vector`, `forceMaxSpeed: boolean` | `void` | Requests a direct move towards a velocity (AI/navigation helper). |
+| `RequestPathMove` | `inputVector: Vector` | `void` | Requests movement through a new move input vector. |
+| `StopActiveMovement` | -- | `void` | Stops applying further movement. |
+| `StopMovementKeepPathing` | -- | `void` | Stops movement but continues following the current navigation path. |
+| `IsFlying` | -- | `boolean` | Whether the vehicle is considered flying. |
+| `IsFalling` | -- | `boolean` | Whether the vehicle is falling. |
+| `IsMovingOnGround` | -- | `boolean` | Whether the vehicle is moving on the ground. |
+| `IsSwimming` | -- | `boolean` | Whether the vehicle is swimming. |
+| `GetVelocityForNavMovement` | -- | `Vector` | Gets the current velocity used by nav movement. |
+| `GetMaxSpeedForNavMovement` | -- | `number` | Gets the maximum speed used for navigation. |
+
+### Replication
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `SetCosmeticDataOnServer` | `data: FRepCosmeticData` | `void` | Sets replicated cosmetic data on the server. |
+
+---
+
+## Examples
+
+### Spawning and Controlling a Vehicle
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Spawn and Control Vehicle"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'spawn', title:'Spawn Actor from Class', style:'function', x:280, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'class',label:'Class',type:'class',side:'input',value:'HVehicle'},
+      {id:'transform',label:'Spawn Transform',type:'transform',side:'input'},
+      {id:'ret',label:'Return Value',type:'object',side:'output'}
+    ]},
+    { id:'fuel', title:'Set Fuel', style:'function', x:560, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'amount',label:'Amount',type:'float',side:'input',value:'1.0'}
+    ]},
+    { id:'throttle', title:'Set Throttle Input', style:'function', x:830, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'value',label:'Value',type:'float',side:'input',value:'1.0'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'spawn',pin:'ei'}},
+    {from:{node:'spawn',pin:'eo'},to:{node:'fuel',pin:'ei'}},
+    {from:{node:'spawn',pin:'ret'},to:{node:'fuel',pin:'target'}},
+    {from:{node:'fuel',pin:'eo'},to:{node:'throttle',pin:'ei'}},
+    {from:{node:'spawn',pin:'ret'},to:{node:'throttle',pin:'target'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+local vehicle = HVehicle(
+    Vector(0, 0, 150),
+    Rotator(0, 0, 0),
+    '/Game/Vehicles/BP_MyCar.BP_MyCar_C',
+    'QueryAndPhysics',
+    true
+)
+
+-- Set fuel and start the engine
+vehicle:SetFuel(1.0)
+vehicle:HoldStarter(0.5)
+
+-- Apply throttle
+vehicle:SetThrottleInput(1.0)
+
+-- Turn on headlights and indicators
+vehicle:SetRightIndicator(true)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+:::warning
+Vehicle spawning and control should be done on the server for authoritative gameplay. Client-side vehicle control may be used for local prediction.
+:::

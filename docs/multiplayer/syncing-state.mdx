@@ -1,0 +1,49 @@
+---
+title: "Syncing State"
+sidebar_position: 5
+---
+
+# Syncing State
+
+Once you understand replication and RPCs, the next challenge is keeping your actual **game state** consistent across all clients and the server. Scores, round timers, team assignments, inventory -- all of this needs to stay in sync without conflicts.
+
+## Where Should State Live?
+
+The short answer: **on the server.** The server is the authority, so all important game state should originate there. Clients receive state through replication and render it, but they never own it.
+
+Common places to store shared state:
+
+- **GameState** -- Replicated by default. Great for global data like scores, round time, and team info that every player needs.
+- **PlayerState** -- Per-player replicated state. Things like individual scores, team assignment, or ready status.
+- **Actors with replicated variables** -- For state tied to world objects, like a door being open or a capture point's progress.
+
+## Synchronized Variables
+
+When you mark a variable as replicated (see [Replication](./replication.mdx)), changes on the server automatically propagate to clients. But there are patterns to keep in mind:
+
+- **Server writes, clients read.** If a client changes a replicated variable locally, that change won't propagate -- it'll get overwritten by the next server update.
+- **Use RepNotify callbacks** to react to changes. When health drops, play a hurt animation. When the score updates, refresh the scoreboard.
+- **Avoid ping-ponging.** Don't have a client RPC that triggers a server change that triggers a client RPC that triggers a server change. Design your data flow to be one-directional: server decides, clients display.
+
+## Handling Late Joiners
+
+One thing that catches people off guard: when a new player connects mid-game, they need to receive the current state of everything. Replicated variables handle this automatically -- a new client gets the current values when actors become relevant to them.
+
+But if you're using RPCs to communicate events (like "the round started"), late joiners will miss those calls. To handle this:
+
+- Store important state in replicated variables, not in one-off RPC calls.
+- When a player connects, check the current state and update them accordingly.
+- Use a combination of replicated state for "what's true now" and RPCs for "something happened this instant."
+
+## Conflict Resolution
+
+In rare cases, you might hit situations where the server and client disagree. The fix is always the same: **the server wins.** Design your systems so the server is the only one writing to gameplay-critical state, and clients only display what they receive.
+
+For things like movement prediction (where the client moves ahead of server confirmation), UE5 has built-in reconciliation -- if the server corrects the client's position, the client snaps or smoothly interpolates to the authoritative state.
+
+## Best Practices
+
+- **Keep replicated variable counts low.** Each one adds bandwidth overhead. Combine related data into structs when possible.
+- **Use relevancy** to avoid replicating state to players who don't need it.
+- **Test with latency.** Use UE5's network emulation tools to simulate lag and packet loss. Your game should still feel good at 100-200ms ping.
+- **Don't fight the model.** If you find yourself trying to make clients authoritative over gameplay state, step back and rethink the design. The server-authoritative model exists for good reasons.

@@ -1,0 +1,253 @@
+---
+title: "Character"
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Character (HCharacter)
+
+The **HCharacter** class extends [Actor](./actor.mdx) and spawns a customizable player character into the world with support for animation, mesh overrides, ragdoll physics, and attachments. It is designed for gameplay characters that need full control over visuals, input, skeletal sockets, and interactions. This class is ideal for roleplay systems, test bots, or any scenario where you need a fully controllable humanoid character.
+
+:::tip
+`HCharacter` is an `Actor`, so it inherits all functions from [Actor](./actor.mdx).
+:::
+
+---
+
+## Constructor
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Spawn Character (Server)"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'spawn', title:'Spawn Actor from Class', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'class',label:'Class',type:'class',side:'input',value:'HCharacter'},
+      {id:'transform',label:'Spawn Transform',type:'transform',side:'input'},
+      {id:'ret',label:'Return Value',type:'object',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'spawn',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Spawn a character and possess it
+local char = HCharacter(Vector(0, 0, 100), Quat(0, 0, 0, 1), player)
+player:Possess(char:GetPawn())
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for constructor parameters.
+```
+
+</TabItem>
+</Tabs>
+
+### Constructor Parameters
+
+| Name | Type | Default | Description |
+|---|---|---|---|
+| `location` | `Vector` | `(0,100,100)` | Spawn position. |
+| `rotation` | `Quat` | `(0,0,0,1)` | Spawn orientation. |
+| `player` | `APlayerController` | **Required** | Player controller to possess the character. |
+| `collision_type` | `string` | `"Pawn"` | Collision profile. |
+| `gravity_enabled` | `boolean` | `true` | Whether gravity is applied to the pawn. |
+| `max_health` | `number` | `100` | Character's starting health. |
+| `death_sound` | `SoundCue` | `nil` | Optional death sound. |
+| `pain_sound` | `SoundCue` | `nil` | Optional hurt sound. |
+
+---
+
+## Methods
+
+| Method | Parameters | Return Type | Authority | Description |
+|---|---|---|---|---|
+| `PlayAnimation` | `Montage: AnimMontage`, `PlayRate: number`, `StartSection: string` | `void` | **Both** | Plays a montage animation on the character. |
+| `StopAnimation` | `BlendOut: number`, `Montage: AnimMontage` | `void` | **Both** | Stops an active montage with an optional blend-out time. |
+| `AddStaticMeshAttached` | `ID: string`, `Mesh: StaticMesh`, `BoneName: string` | `void` | **Both** | Attaches a static mesh to a bone/socket on the character. |
+| `RemoveStaticMeshAttached` | `ID: string` | `void` | **Both** | Removes a previously attached mesh by ID. |
+| `RemoveAllStaticMeshesAttached` | -- | `void` | **Both** | Removes all attached meshes from the character. |
+| `SetInputEnabled` | `bEnabled: boolean` | `void` | **Server** | Enables or disables player input for movement and look. |
+| `SetRagdollMode` | `bEnabled: boolean` | `void` | **Both** | Toggles ragdoll physics on or off. |
+| `SetMesh` | `Mesh: SkeletalMesh` | `void` | **Both** | Overrides the character's skeletal mesh. |
+| `GetPawn` | -- | `ACharacter` | **Both** | Returns the underlying `ACharacter` actor. |
+| `GetPlayer` | -- | `APlayerController` | **Both** | Returns the controlling `APlayerController`. |
+| `GetTeam` | -- | `number` | **Both** | Returns the team value assigned to the character. |
+| `GetMesh` | -- | `string` | **Both** | Returns the name of the currently assigned skeletal mesh. |
+| `GetBoneTransform` | `BoneName: string` | `FTransform` | **Both** | Returns a `FTransform` for a bone name (e.g., `"hand_r"`). |
+| `IsInRagdollMode` | -- | `boolean` | **Both** | Returns true if ragdoll physics are currently active. |
+| `IsInputEnabled` | -- | `boolean` | **Both** | Returns whether input is currently enabled. |
+
+---
+
+## Examples
+
+### Playing an Animation
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Play Animation Montage"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'play', title:'Play Anim Montage', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input',value:'Character Ref'},
+      {id:'montage',label:'Montage to Play',type:'object',side:'input',value:'My Montage'},
+      {id:'rate',label:'Play Rate',type:'float',side:'input',value:'1.0'},
+      {id:'section',label:'Start Section',type:'name',side:'input',value:'"StartSection"'},
+      {id:'ret',label:'Return Value',type:'float',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'play',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Play a montage animation
+char:PlayAnimation(MyMontage, 1.0, "StartSection")
+
+-- Stop the animation with a blend-out
+char:StopAnimation(0.25, MyMontage)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+### Attaching Meshes
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Attach Static Mesh to Character"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'attach', title:'Add Static Mesh Attached', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input',value:'Character Ref'},
+      {id:'id',label:'ID',type:'string',side:'input',value:'"bag"'},
+      {id:'mesh',label:'Mesh',type:'object',side:'input',value:'Bag Mesh'},
+      {id:'bone',label:'Bone Name',type:'name',side:'input',value:'"spine_03"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'attach',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Attach a backpack mesh to a bone
+char:AddStaticMeshAttached("bag", BagMesh, "spine_03")
+
+-- Remove it later
+char:RemoveStaticMeshAttached("bag")
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Mesh attachment follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+### Ragdoll Mode
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Toggle Ragdoll Mode"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'rag', title:'Set Ragdoll Mode', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input',value:'Character Ref'},
+      {id:'enabled',label:'Enabled',type:'bool',side:'input',value:'true'}
+    ]},
+    { id:'check', title:'Is In Ragdoll Mode', style:'pure', x:300, y:170, pins:[
+      {id:'target',label:'Target',type:'object',side:'input',value:'Character Ref'},
+      {id:'ret',label:'Return Value',type:'bool',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'rag',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Enable ragdoll physics
+char:SetRagdollMode(true)
+
+-- Check if in ragdoll
+if char:IsInRagdollMode() then
+    print("Character is ragdolling")
+end
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Ragdoll mode follows the same pattern.
+// Refer to the Lua examples for function signatures.
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+:::note
+Player characters are spawned by passing the player controller to the `HCharacter` constructor. The player controller then possesses the character's pawn via `player:Possess(char:GetPawn())`.
+:::

@@ -1,0 +1,237 @@
+---
+title: "Timer"
+sidebar_position: 6
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Timer
+
+The **Timer** utility is a global class for scheduling delayed or repeating callbacks. It provides both classic timer-based control and coroutine-style asynchronous flows for scripting convenience. All timer functions are available on both server and client.
+
+---
+
+## Methods
+
+| Method | Parameters | Return Type | Authority | Description |
+|---|---|---|---|---|
+| `Timer.SetNextTick` | `Callback: function` | `void` | **Both** | Schedules a one-time callback to run on the next engine tick. |
+| `Timer.SetTimeout` | `Callback: function`, `Delay: number` | `number` | **Both** | Schedules a one-time callback to execute after a delay (in milliseconds). Returns a timer ID. |
+| `Timer.SetInterval` | `Callback: function`, `Interval: number` | `number` | **Both** | Runs the callback repeatedly every `Interval` milliseconds until cleared. Returns a timer ID. |
+| `Timer.ClearTimeout` | `timerID: number` | `void` | **Both** | Stops a one-shot or repeating timer by ID. |
+| `Timer.ClearInterval` | `timerID: number` | `void` | **Both** | Alias of `Timer.ClearTimeout`. Stops a timer by ID. |
+| `Timer.Pause` | `timerID: number` | `void` | **Both** | Pauses a currently active timer. |
+| `Timer.Resume` | `timerID: number` | `void` | **Both** | Resumes a paused timer. |
+| `Timer.IsValid` | `timerID: number` | `boolean` | **Both** | Returns `true` if a timer is still active and not cleared or expired. |
+| `Timer.IsPaused` | `timerID: number` | `boolean` | **Both** | Returns `true` if the timer is currently paused. |
+| `Timer.GetElapsedTime` | `timerID: number` | `number` | **Both** | Returns how much time (in milliseconds) has passed since the timer started or last ran. |
+| `Timer.GetRemainingTime` | `timerID: number` | `number` | **Both** | Returns the number of milliseconds left before the next callback execution. |
+| `Timer.Invalidate` | `timerID: number` | `void` | **Both** | Manually invalidates a timer handle so it will not run again, even if not cleared. |
+| `Timer.HasHandle` | `timerID: number` | `boolean` | **Both** | Returns `true` if a timer has a valid handle, even if paused. |
+| `Timer.ResetElapsedTime` | `timerID: number` | `void` | **Both** | Restarts a timer with the same delay and arguments, resetting its elapsed time. |
+| `Timer.Delay` | `worldContext: HPlayer/HWorld`, `seconds: number`, `Callback: function` | `void` | **Both** | Coroutine-safe delay that pauses execution for the given seconds, then runs the callback. |
+| `Timer.CreateThread` | `Callback: function` | `void` | **Both** | Runs a Lua function as a coroutine thread, similar to FiveM behavior. |
+| `Timer.Wait` | `waitTime: number` | `void` | **Both** | Coroutine-only delay (must be called from inside `Timer.CreateThread`). Pauses the thread for the given milliseconds. |
+
+---
+
+## Examples
+
+### Delayed Execution
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Delayed Execution with Set Timer by Event"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'timer', title:'Set Timer by Event', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'event',label:'Event',type:'delegate',side:'input'},
+      {id:'time',label:'Time',type:'float',side:'input',value:'1.0'},
+      {id:'looping',label:'Looping',type:'bool',side:'input',value:'false'},
+      {id:'ret',label:'Return Value',type:'struct',side:'output'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:300, y:200, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Runs after 1 second"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'timer',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Execute after 1 second (1000 ms)
+Timer.SetTimeout(function()
+    print("Runs after 1 second")
+end, 1000)
+
+-- Schedule a callback on the next tick
+Timer.SetNextTick(function()
+    print("Runs on next tick")
+end)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Execute after 1 second (1000 ms)
+Timer.SetTimeout(() => {
+    print("Runs after 1 second");
+}, 1000);
+```
+
+</TabItem>
+</Tabs>
+
+### Repeating Interval with Pause/Resume
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Repeating Timer with Pause/Resume"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'timer', title:'Set Timer by Event', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'event',label:'Event',type:'delegate',side:'input'},
+      {id:'time',label:'Time',type:'float',side:'input',value:'2.0'},
+      {id:'looping',label:'Looping',type:'bool',side:'input',value:'true'},
+      {id:'ret',label:'Return Value',type:'struct',side:'output'}
+    ]},
+    { id:'pause', title:'Pause Timer by Handle', style:'function', x:580, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'handle',label:'Handle',type:'struct',side:'input'}
+    ]},
+    { id:'resume', title:'Unpause Timer by Handle', style:'function', x:850, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'handle',label:'Handle',type:'struct',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'timer',pin:'ei'}},
+    {from:{node:'timer',pin:'eo'},to:{node:'pause',pin:'ei'}},
+    {from:{node:'timer',pin:'ret'},to:{node:'pause',pin:'handle'}},
+    {from:{node:'pause',pin:'eo'},to:{node:'resume',pin:'ei'}},
+    {from:{node:'timer',pin:'ret'},to:{node:'resume',pin:'handle'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Repeat every 2 seconds
+local handle = Timer.SetInterval(function()
+    print("Repeats every 2 seconds")
+end, 2000)
+
+-- Pause the interval
+Timer.Pause(handle)
+
+-- Resume it later
+Timer.Resume(handle)
+
+-- Check remaining time
+local remaining = Timer.GetRemainingTime(handle)
+
+-- Stop the interval
+Timer.ClearInterval(handle)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Repeat every 2 seconds
+const handle = Timer.SetInterval(() => {
+    print("Repeats every 2 seconds");
+}, 2000);
+
+// Stop the interval
+Timer.ClearInterval(handle);
+```
+
+</TabItem>
+</Tabs>
+
+### Coroutine Threads
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Delay Node (Blueprint Equivalent)"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'delay', title:'Delay', style:'function', x:280, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'Completed',type:'exec',side:'output'},
+      {id:'dur',label:'Duration',type:'float',side:'input',value:'1.5'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:530, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Delayed by 1.5 seconds"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'delay',pin:'ei'}},
+    {from:{node:'delay',pin:'eo'},to:{node:'ps',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Run a function as a coroutine thread
+Timer.CreateThread(function()
+    print("Running async...")
+    Timer.Wait(1000)
+    print("1 second later")
+end)
+
+-- Coroutine-safe delay with world context
+Timer.Delay(HWorld, 1.5, function()
+    print("Delayed by 1.5 seconds")
+end)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Coroutine threads are a Lua-only feature.
+// Use Timer.SetTimeout for delayed execution in JavaScript.
+```
+
+</TabItem>
+</Tabs>
+
+---
+
+:::tip
+This is the preferred method of running a continuous loop versus using a thread. Always call `Timer.ClearInterval` in the global `onShutdown` function to prevent leaked callbacks.
+:::

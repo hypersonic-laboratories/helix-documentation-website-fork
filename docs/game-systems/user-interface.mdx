@@ -1,0 +1,223 @@
+---
+title: User Interface
+sidebar_position: 5
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# User Interface
+
+HELIX uses the **[WebUI](/api/classes/webui)** system to render user interfaces. Your HUD, menus, scoreboards, and any other UI elements are built with standard HTML, CSS, and JavaScript, then displayed as an overlay inside the game. If you can build a webpage, you can build a HELIX UI.
+
+## Creating a WebUI
+
+A [`WebUI`](/api/classes/webui) instance loads an HTML file (or URL) and displays it on the player's screen. The constructor takes a unique name for logging, a path to the HTML file or URL, and an optional input mode.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Create a WebUI from a local HTML file"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'create', title:'Create WebUI', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'name',label:'Name',type:'string',side:'input',value:'"MyHUD"'},
+      {id:'path',label:'HTML Path',type:'string',side:'input',value:'"MyPackage/UI/hud.html"'},
+      {id:'ret',label:'WebUI',type:'object',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'create',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Create a HUD from a local HTML file
+local my_hud = WebUI("MyHUD", "MyPackage/UI/hud.html")
+
+-- Or load from a remote URL
+local remote_ui = WebUI("Scoreboard", "https://my-cdn.com/scoreboard.html")
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Create a HUD from a local HTML file
+const myHUD = new WebUI("MyHUD", "MyPackage/UI/hud.html");
+
+// Or load from a remote URL
+const remoteUI = new WebUI("Scoreboard", "https://my-cdn.com/scoreboard.html");
+```
+
+</TabItem>
+</Tabs>
+
+The first parameter is a unique name used for logging. The second is the HTML file path (relative to your package) or a full URL. An optional third parameter sets the input mode: `0` = Game Only, `1` = UI Only, `2` = Game and UI.
+
+## Communicating: Game to UI
+
+The real power of WebUI comes from the two-way communication between your game scripts and the HTML interface. Use `SendEvent` to send data from your game code into the UI's JavaScript.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Send health data to the UI"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'send', title:'Send Event', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input',value:'MyHUD'},
+      {id:'event',label:'Event Name',type:'string',side:'input',value:'"UpdateHealth"'},
+      {id:'data',label:'Data',type:'struct',side:'input',value:'HealthData'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'send',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Send health data to the UI
+my_hud:SendEvent("UpdateHealth", {health = 80, max_health = 100})
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Send health data to the UI
+myHUD.SendEvent("UpdateHealth", {health: 80, maxHealth: 100});
+```
+
+</TabItem>
+</Tabs>
+
+The UI receives these events through the browser's message event system.
+
+## Communicating: UI to Game
+
+Your UI can also send events back to the game -- perfect for menu button clicks, settings changes, or form submissions. Use `RegisterEventHandler` on the WebUI instance to listen for events sent from the HTML side.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Register a UI event handler for respawn"
+  nodes={[
+    { id:'event', title:'On WebUI Event: RequestRespawn', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'arg',label:'Argument',type:'string',side:'output'},
+      {id:'cb',label:'Callback',type:'delegate',side:'output'}
+    ]},
+    { id:'respawn', title:'Respawn Player', style:'function', x:400, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'event',pin:'eo'},to:{node:'respawn',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Register an event handler for UI events
+my_hud:RegisterEventHandler("RequestRespawn", function(arg, callback)
+    -- Respawn the player's character
+    RespawnPlayer()
+end)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Register an event handler for UI events
+myHUD.RegisterEventHandler("RequestRespawn", (arg, callback) => {
+    // Respawn the player's character
+    RespawnPlayer();
+});
+```
+
+</TabItem>
+</Tabs>
+
+## Input Focus
+
+When a UI element needs keyboard/mouse input (like a text field or a menu), you control the input mode on the WebUI instance. The input modes are: `0` = Game Only (no UI input), `1` = UI Only (full input to UI), `2` = Game and UI (mouse focus shared).
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Toggle input mode between UI and game"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'uimode', title:'Set Input Mode', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input',value:'MyHUD'},
+      {id:'mode',label:'Mode',type:'int',side:'input',value:'1 (UI Only)'}
+    ]},
+    { id:'gamemode', title:'Set Input Mode', style:'function', x:600, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input',value:'MyHUD'},
+      {id:'mode',label:'Mode',type:'int',side:'input',value:'0 (Game Only)'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'uimode',pin:'ei'}},
+    {from:{node:'uimode',pin:'eo'},to:{node:'gamemode',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Send all input to the UI (for menus, text fields, etc.)
+my_hud:SetInputMode(1)
+
+-- Return input to the game
+my_hud:SetInputMode(0)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Send all input to the UI (for menus, text fields, etc.)
+myHUD.SetInputMode(1);
+
+// Return input to the game
+myHUD.SetInputMode(0);
+```
+
+</TabItem>
+</Tabs>
+
+:::tip
+Keep your UI lightweight. Since WebUI runs in a browser engine, heavy DOM manipulation or large frameworks can impact frame rate. Vanilla JS or a lightweight library like Preact works great.
+:::

@@ -1,0 +1,156 @@
+---
+title: "Your First Script"
+sidebar_position: 3
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Your First Script
+
+This is the moment it gets real. You're about to write code that runs inside a multiplayer World. Let's start with the classics — print a message, then spawn something.
+
+## Create a Package
+
+Scripts live inside **Packages**. Let's make one:
+
+1. Open **HELIX Studio** from the Launcher
+2. Go to **File → New Package**
+3. Name it `my-first-package`
+4. Choose **Script Package** as the type
+5. Hit **Create**
+
+Your Package folder is now set up with the right structure, and a starter script file is waiting for you.
+
+## Hello HELIX!
+
+Open the main script file in your Package. Let's make sure everything works:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Hello HELIX! — Print a message on BeginPlay"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Hello HELIX!"'}
+    ]}
+  ]}
+  wires={[{from:{node:'bp',pin:'eo'},to:{node:'ps',pin:'ei'}}]}
+/>
+
+In HELIX Studio, open your Package Blueprint, find **Event BeginPlay**, and wire it to a **Print String** node with the message `Hello HELIX!`.
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- my-first-package/Server/Index.lua
+
+print("Hello HELIX!")
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// my-first-package/Server/Index.js
+
+console.log("Hello HELIX!");
+```
+
+</TabItem>
+</Tabs>
+
+Run your World with the Package loaded. You should see **"Hello HELIX!"** in the output log. If you do — congratulations, you're a HELIX scripter now.
+
+## Spawn an Actor
+
+Printing is great for debugging, but let's do something visible. Here's how to spawn a prop in the World when the script loads:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Spawn a cube actor above the origin"
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'spawn', title:'Spawn Actor from Class', style:'function', x:300, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'class',label:'Class',type:'class',side:'input',value:'StaticMeshActor'},
+      {id:'loc',label:'Spawn Location',type:'vector',side:'input',value:'(0, 0, 200)'},
+      {id:'ret',label:'Actor',type:'object',side:'output'}
+    ]},
+    { id:'setmesh', title:'Set Static Mesh', style:'function', x:620, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'input'},
+      {id:'mesh',label:'New Mesh',type:'object',side:'input',value:'Cube'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'spawn',pin:'ei'}},
+    {from:{node:'spawn',pin:'eo'},to:{node:'setmesh',pin:'ei'}},
+    {from:{node:'spawn',pin:'ret'},to:{node:'setmesh',pin:'target'}}
+  ]}
+/>
+
+Drag out from **Event BeginPlay**, add a **Spawn Actor from Class** node, set the class to **StaticMeshActor**, and configure the spawn transform. Then set its mesh to a basic cube.
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- my-first-package/Server/Index.lua
+
+-- Spawn a cube prop 200 units above the origin
+local myProp = Prop(
+    Vector(0, 0, 200),           -- location
+    Rotator(0, 0, 0),            -- rotation
+    "helix::SM_Cube"             -- static mesh asset
+)
+
+print("Spawned a cube at: " .. tostring(myProp:GetLocation()))
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// my-first-package/Server/Index.js
+
+// Spawn a cube prop 200 units above the origin
+const myProp = new Prop(
+    new Vector(0, 0, 200),       // location
+    new Rotator(0, 0, 0),        // rotation
+    "helix::SM_Cube"             // static mesh asset
+);
+
+console.log(`Spawned a cube at: ${myProp.GetLocation()}`);
+```
+
+</TabItem>
+</Tabs>
+
+Run the World again. You should see a cube hovering above the ground. It's not much to look at — but it was conjured into existence by *your* code, in a multiplayer World, running on Unreal Engine 5.
+
+## What happened here?
+
+- You created a **Package** to hold your scripts
+- You wrote a **server-side script** that runs when the Package loads
+- You **spawned an Actor** (a physical object in the World)
+
+Server-side scripts run on the server and control the authoritative game state. Later you'll learn about client-side scripts for UI, effects, and input handling. But the server is where the real game logic lives.
+
+## What's next?
+
+You've got a World with objects and scripts. Now let's **[publish it](/docs/getting-started/publish-and-play)** so other people can see what you've built.

@@ -1,0 +1,222 @@
+---
+title: "Remote Calls"
+sidebar_position: 3
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Remote Calls
+
+Replication handles syncing data automatically, but sometimes you need to explicitly tell the server or a client to do something. That's what **Remote Procedure Calls (RPCs)** are for -- they let you call a function on one machine and have it execute on another.
+
+## Three Types of RPCs
+
+HELIX supports three RPC types, each for a different direction:
+
+### Server Functions
+
+Called from a **client**, executed on the **server**. Use these when a player wants to do something that requires server authority -- like dealing damage, purchasing an item, or requesting a spawn.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Server RPC: validate and apply damage"
+  nodes={[
+    { id:'evt', title:'Custom Event: Server RequestAttack', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'target',label:'Target',type:'object',side:'output'}
+    ]},
+    { id:'valid', title:'Is Valid', style:'pure', x:30, y:160, pins:[
+      {id:'obj',label:'Object',type:'object',side:'input'},
+      {id:'ret',label:'Is Valid',type:'bool',side:'output'}
+    ]},
+    { id:'branch', title:'Branch', style:'branch', x:330, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'cond',label:'Condition',type:'bool',side:'input'},
+      {id:'true',label:'True',type:'exec',side:'output'},
+      {id:'false',label:'False',type:'exec',side:'output'}
+    ]},
+    { id:'damage', title:'Apply Damage', style:'function', x:600, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'actor',label:'Damaged Actor',type:'object',side:'input'},
+      {id:'dmg',label:'Base Damage',type:'float',side:'input',value:'25.0'},
+      {id:'instigator',label:'Instigator',type:'object',side:'input'},
+      {id:'cause',label:'Damage Causer',type:'object',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'evt',pin:'eo'},to:{node:'branch',pin:'ei'}},
+    {from:{node:'evt',pin:'target'},to:{node:'valid',pin:'obj'}},
+    {from:{node:'valid',pin:'ret'},to:{node:'branch',pin:'cond'}},
+    {from:{node:'branch',pin:'true'},to:{node:'damage',pin:'ei'}},
+    {from:{node:'evt',pin:'target'},to:{node:'damage',pin:'actor'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Client-side: request an action on the server
+TriggerServerEvent("RequestAttack", target_actor)
+
+-- Server-side: listen and handle (controller is passed automatically as first arg)
+RegisterServerEvent("RequestAttack", function(controller, target)
+    if target and target:IsValid() then
+        target:ApplyDamage(25.0, controller)
+    end
+end)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Server-side: register an endpoint for the attack action
+Helix.server(async () => {
+    Helix.endpoint("RequestAttack", async (helixId, targetId) => {
+        // Validate and apply damage on the server
+        const ok = await applyDamage(helixId, targetId, 25.0);
+        return { ok };
+    });
+});
+
+// Client-side: call the server endpoint
+const id = Helix.Player.helixId();
+await Helix.call("RequestAttack", id.toString(), targetId);
+```
+
+</TabItem>
+</Tabs>
+
+### Client Functions
+
+Called from the **server**, executed on a **specific client**. Perfect for sending personalized information -- like showing a notification, playing a sound only that player should hear, or updating their UI.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Client RPC: show a notification on the owning client"
+  nodes={[
+    { id:'evt', title:'Custom Event: Client ShowNotification', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'msg',label:'Message',type:'string',side:'output'}
+    ]},
+    { id:'show', title:'Print String', style:'function', x:400, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'evt',pin:'eo'},to:{node:'show',pin:'ei'}},
+    {from:{node:'evt',pin:'msg'},to:{node:'show',pin:'str'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Server: send a notification to a specific client
+TriggerClientEvent(controller, "ShowNotification", "You found a rare item!")
+
+-- Client: listen and display
+RegisterClientEvent("ShowNotification", function(message)
+    print("Notification: " .. message)
+end)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Server: register an endpoint that clients can call
+Helix.server(async () => {
+    Helix.endpoint("getNotifications", async (helixId) => {
+        const notifications = await loadNotifications(helixId);
+        return notifications;
+    });
+});
+
+// Client: call the endpoint to get notifications
+const id = Helix.Player.helixId();
+const notifications = await Helix.call("getNotifications", id.toString());
+```
+
+</TabItem>
+</Tabs>
+
+### Multicast Functions
+
+Called from the **server**, executed on **all clients** (and optionally the server too). Great for global events like explosions, weather changes, or announcements.
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Multicast RPC: spawn explosion effect on all clients"
+  nodes={[
+    { id:'evt', title:'Custom Event: Multicast PlayExplosion', style:'event', x:30, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'loc',label:'Location',type:'vector',side:'output'}
+    ]},
+    { id:'spawn', title:'Spawn Emitter at Location', style:'function', x:400, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'template',label:'Emitter Template',type:'object',side:'input',value:'ExplosionFX'},
+      {id:'loc',label:'Location',type:'vector',side:'input'},
+      {id:'ret',label:'Emitter',type:'object',side:'output'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'evt',pin:'eo'},to:{node:'spawn',pin:'ei'}},
+    {from:{node:'evt',pin:'loc'},to:{node:'spawn',pin:'loc'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Server: broadcast an event to all connected clients
+BroadcastEvent("PlayExplosion", explosion_location)
+
+-- Client: all clients receive and play the effect
+RegisterClientEvent("PlayExplosion", function(location)
+    print("Explosion at: " .. tostring(location))
+end)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// JavaScript uses the endpoint/call pattern for server communication.
+// For broadcast-style behavior, the server can push data to all clients
+// through shared state or by having each client poll an endpoint.
+Helix.server(async () => {
+    Helix.endpoint("getExplosions", async () => {
+        return recentExplosions;
+    });
+});
+```
+
+</TabItem>
+</Tabs>
+
+## Reliable vs. Unreliable
+
+RPCs can be **Reliable** (guaranteed delivery, ordered) or **Unreliable** (faster, but might get dropped). Use Reliable for important gameplay events like damage or purchases. Use Unreliable for frequent, non-critical updates like cosmetic effects.
+
+## Best Practices
+
+- **Always validate on the server.** Never trust data coming from a client RPC -- check that the action is legal before applying it.
+- **Keep payloads small.** Send IDs or indices instead of full objects when possible.
+- **Don't spam RPCs.** If you're calling an RPC every frame, you probably want replication instead.
+- **Use Multicast sparingly.** Broadcasting to every client is expensive -- consider whether relevancy-based replication would work better.

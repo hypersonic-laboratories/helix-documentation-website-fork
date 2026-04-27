@@ -1,0 +1,229 @@
+---
+title: "Timers & Delays"
+sidebar_position: 7
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import BlueprintGraph from '@site/src/components/BlueprintGraph';
+
+# Timers & Delays
+
+Need something to happen later, or on a repeating schedule? Here's how to handle time-based logic in HELIX.
+
+## One-Shot Delays
+
+Run code after a specified delay:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="One-Shot Timer"
+
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:20, y:60, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'timer', title:'Set Timer by Event', style:'function', x:240, y:60, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'evt',label:'Event',type:'delegate',side:'input'},
+      {id:'time',label:'Time',type:'float',side:'input',value:'3.0'},
+      {id:'loop',label:'Looping',type:'bool',side:'input',value:'false'},
+      {id:'handle',label:'Return Value',type:'struct',side:'output'}
+    ]},
+    { id:'ce', title:'OnDelayComplete', style:'event', x:20, y:170, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'del',label:'',type:'delegate',side:'output'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:580, y:170, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Timer fired!"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'timer',pin:'ei'}},
+    {from:{node:'ce',pin:'del'},to:{node:'timer',pin:'evt'}},
+    {from:{node:'ce',pin:'eo'},to:{node:'ps',pin:'ei'}}
+  ]}
+/>
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Using the Timer API
+Timer.SetTimeout(function()
+    print("This runs after 3 seconds")
+end, 3000)
+
+-- Using UE's built-in timer
+UE.UKismetSystemLibrary.K2_SetTimerDelegate(
+    { self, self.OnDelayComplete }, 3.0, false
+)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Using standard JavaScript timers
+setTimeout(() => {
+    console.log("This runs after 3 seconds");
+}, 3000);
+
+// Or use async/await for sequential delays
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function countdown() {
+    console.log("3...");
+    await delay(1000);
+    console.log("2...");
+    await delay(1000);
+    console.log("1...");
+    await delay(1000);
+    console.log("Go!");
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Repeating Timers
+
+Run code on a regular interval:
+
+<Tabs groupId="scripting-language">
+<TabItem value="blueprint" label="Blueprint" default>
+
+<BlueprintGraph
+  title="Repeating Timer"
+
+  nodes={[
+    { id:'bp', title:'Event BeginPlay', style:'event', x:20, y:30, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'}
+    ]},
+    { id:'timer', title:'Set Timer by Event', style:'function', x:240, y:30, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'evt',label:'Event',type:'delegate',side:'input'},
+      {id:'time',label:'Time',type:'float',side:'input',value:'1.0'},
+      {id:'loop',label:'Looping',type:'bool',side:'input',value:'true'},
+      {id:'handle',label:'Return Value',type:'struct',side:'output'}
+    ]},
+    { id:'ce', title:'OnTimerTick', style:'event', x:20, y:160, pins:[
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'del',label:'',type:'delegate',side:'output'}
+    ]},
+    { id:'ps', title:'Print String', style:'function', x:580, y:160, pins:[
+      {id:'ei',label:'',type:'exec',side:'input'},
+      {id:'eo',label:'',type:'exec',side:'output'},
+      {id:'str',label:'In String',type:'string',side:'input',value:'"Tick!"'}
+    ]}
+  ]}
+  wires={[
+    {from:{node:'bp',pin:'eo'},to:{node:'timer',pin:'ei'}},
+    {from:{node:'ce',pin:'del'},to:{node:'timer',pin:'evt'}},
+    {from:{node:'ce',pin:'eo'},to:{node:'ps',pin:'ei'}}
+  ]}
+/>
+
+Use **Clear Timer by Handle** with the return value from Set Timer by Event to stop a repeating timer.
+
+</TabItem>
+<TabItem value="lua" label="Lua">
+
+```lua
+-- Repeating timer (returns a handle for cancellation)
+local handle = Timer.SetInterval(function()
+    print("Tick! Current time: " .. os.clock())
+end, 1000)
+
+-- Stop the timer later
+Timer.ClearInterval(handle)
+```
+
+</TabItem>
+<TabItem value="js" label="JavaScript">
+
+```javascript
+// Repeating timer
+const handle = setInterval(() => {
+    console.log("Tick!", Date.now());
+}, 1000);
+
+// Stop the timer later
+clearInterval(handle);
+```
+
+</TabItem>
+</Tabs>
+
+## Coroutines in Lua
+
+Lua coroutines let you write sequential-looking code that pauses and resumes across frames:
+
+```lua
+function M:ReceiveBeginPlay()
+    -- Start a coroutine
+    self.SpawnRoutine = coroutine.create(function()
+        for i = 1, 5 do
+            self:SpawnEnemy(i)
+            print("Spawned enemy " .. i .. ", waiting...")
+            coroutine.yield()  -- pause until resumed
+        end
+        print("All enemies spawned!")
+    end)
+
+    -- Resume it every 2 seconds
+    self.TimerHandle = Timer.SetInterval(function()
+        if coroutine.status(self.SpawnRoutine) ~= "dead" then
+            coroutine.resume(self.SpawnRoutine)
+        else
+            Timer.ClearInterval(self.TimerHandle)
+        end
+    end, 2000)
+end
+```
+
+## Promises in JavaScript
+
+For complex async flows, use Promises or async/await:
+
+```javascript
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function waitForPlayers(minPlayers) {
+    return new Promise((resolve) => {
+        const handle = setInterval(() => {
+            // Check connected players (example — adjust to your game logic)
+            const count = getConnectedPlayerCount();
+            if (count >= minPlayers) {
+                clearInterval(handle);
+                resolve(count);
+            }
+        }, 500);
+    });
+}
+
+async function startGame() {
+    console.log("Waiting for players...");
+    const count = await waitForPlayers(4);
+    console.log(`${count} players ready. Starting!`);
+
+    await delay(3000);  // 3 second countdown
+    Helix.emit("GameStarted");
+}
+```
+
+## Tips
+
+- Timer values in the Lua [Timer](/api/classes/timer) API use **milliseconds** (1000 = 1 second). UE's built-in timer nodes use **seconds**.
+- Always store timer handles and clear them when your actor is destroyed. Orphaned timers cause bugs that are tough to track down.
+- Avoid running heavy logic on fast intervals (< 100ms). If you need per-frame updates, use `Tick` / `ReceiveTick` instead.
+- The Blueprint **Delay** node is convenient but pauses that entire execution thread. For multiple independent delays, use separate timer handles.
