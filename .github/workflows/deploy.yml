@@ -29,5 +29,15 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Matches the existing project name used by wrangler.jsonc
-          command: pages deploy build --project-name=helix-documentation-website-fork
+          # New Cloudflare Pages project — created on first successful deploy.
+          # We deliberately did NOT point at the existing
+          # helix-documentation-website-fork Worker so this preview can iterate
+          # without disturbing whatever's at the old URL. Once we're happy,
+          # we'll point a custom domain (eventually docs.helixgame.com) here
+          # and retire the old Worker.
+          #
+          # NOTE: Cloudflare is slowly deprecating Pages in favour of Workers
+          # Static Assets (per Arash, 2026-04-27). Pages keeps working for now
+          # — we'll plan a migration in 12-18 months when the WSA tooling is
+          # more mature.
+          command: pages deploy build --project-name=helix-docs-staging
