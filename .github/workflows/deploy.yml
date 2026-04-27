@@ -24,12 +24,25 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      # Create the Pages project on first run. `wrangler pages deploy` does
+      # NOT auto-create projects, so without this we get a "Project not found"
+      # error on first deploy. After it exists, this step harmlessly errors
+      # ("project already exists") and we continue to the deploy.
+      - name: Ensure Cloudflare Pages project exists
+        uses: cloudflare/wrangler-action@v3
+        continue-on-error: true
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create helix-docs-staging --production-branch=development
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # New Cloudflare Pages project — created on first successful deploy.
+          # New Cloudflare Pages project — created on first successful deploy
+          # (see "Ensure Cloudflare Pages project exists" step above).
           # We deliberately did NOT point at the existing
           # helix-documentation-website-fork Worker so this preview can iterate
           # without disturbing whatever's at the old URL. Once we're happy,
