@@ -1,6 +1,5 @@
----
+﻿---
 title: Trigger
-description:
 sidebar_position: 0
 tags: [class]
 ---
@@ -33,7 +32,7 @@ local trig = Trigger(
 | `Location`         | `Vector`   | `(0,0,0)`                 | World position for the trigger                                              |
 | `Rotation`         | `Rotator`  | `(0,0,0)`                 | World rotation                                                              |
 | `Extent`           | `Vector`   | `(100,100,100)`           | Shape extents (radius, box half-size, or capsule radius/height)            |
-| `TriggerType`      | `enum`     | `TriggerType.Sphere`      | Shape of the volume — Sphere, Box, or Capsule                              |
+| `TriggerType`      | `enum`     | `TriggerType.Sphere`      | Shape of the volume â€” Sphere, Box, or Capsule                              |
 | `bVisible`         | `boolean`  | `false`                   | If true, draws a semi-transparent debug shape                               |
 | `CallbackFunction` | `function` | **Required**              | Function called on actor overlap                                            |
 | `Color`            | `Color`    | `(0,1,0,0.5)`             | Debug color if visible                                                      |

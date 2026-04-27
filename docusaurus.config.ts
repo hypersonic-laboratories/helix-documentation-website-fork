@@ -18,7 +18,20 @@ const config: Config = {
   projectName: 'new-docs',
 
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
+
+  // Migrated from top-level `onBrokenMarkdownLinks` (deprecated in 3.10+).
+  markdown: {
+    // `detect` = use file extension: .md uses lenient CommonMark,
+    // .mdx uses strict MDX. This lets the ported old-docs (.md) compile
+    // without choking on raw HTML-ish content MkDocs tolerated.
+    format: 'detect',
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+      // Same story for images referenced with absolute `/img/...` paths that
+      // haven't been ported over yet from the MkDocs site. Warn, don't fail.
+      onBrokenMarkdownImages: 'warn',
+    },
+  },
 
   i18n: {
     defaultLocale: 'en',
