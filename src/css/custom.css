@@ -186,6 +186,79 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ---------------------------------------------------------------------------
+ * Custom scrollbar — quiet, no default arrow buttons.
+ * Mirrors Kostas's prototype where the sidebar scrollbar is a thin track
+ * with no up/down arrows. WebKit browsers only (Chrome, Edge, Safari).
+ * ------------------------------------------------------------------------ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox equivalent (only supports thin/auto/none + thumb/track colours) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+/* ---------------------------------------------------------------------------
+ * Sidebar item: "Essential" badge.
+ * Add `className: 'sidebar-item-essential'` to a sidebar item in
+ * sidebars.ts and the link gets a small purple "Essential" pill on the
+ * right, mirroring Kostas's prototype.
+ *
+ * Implementation: Docusaurus's .menu__link is already `display: flex` with
+ * `justify-content: space-between`. Adding flex-wrap lets the pill drop
+ * to a second line when the link text is too long for one line, instead
+ * of overlapping the wrapped text (which the previous absolute-positioned
+ * approach did). Better line-height keeps multi-line items readable.
+ * ------------------------------------------------------------------------ */
+.sidebar-item-essential .menu__link {
+  flex-wrap: wrap;
+  row-gap: 4px;
+  column-gap: 8px;
+  line-height: 1.35;
+}
+
+.sidebar-item-essential .menu__link::after {
+  content: 'Essential';
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(139, 124, 246, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 124, 246, 0.3);
+  pointer-events: none;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 /* Table styling */
 table {
   border-radius: 8px;

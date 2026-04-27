@@ -1,44 +1,52 @@
 /* ===========================================================================
- * Homepage styles — extended for the Kostas-merged tutorials home.
+ * TutorialsHome styles — Kostas's structure (left-aligned, tight spacing)
+ * with Jack's HELIX colour tokens.
  *
- * Original sections (Jack): hero, sections, path cards.
- * New sections (Kostas's structure): essential cards (Step 1/2/3),
- * topic cards (emoji-led 9-grid), deep dive cards (4-grid), tag pills,
- * section eyebrows.
- *
- * Colour & typography palette intentionally unchanged from Jack's original
- * — teal #04ffd1 + purple rgba(102, 84, 241) — so the new components blend
- * with the rest of the site and helixgame.com.
+ * Renders inside a Docusaurus docs page so it inherits the doc's column +
+ * sidebar. We deliberately do NOT bleed out of the column — content is
+ * left-aligned, sits close to the breadcrumb, mirrors Kostas's prototype.
  * =========================================================================== */
 
+.tutorialsHome {
+  /* Pull the page content up under the breadcrumb so the hero sits
+     close to the top of the doc area, mirroring Kostas's prototype. */
+  margin-top: -12px;
+}
+
 /* ----------------------------------------------------------------------------
- * Hero
+ * Hero — left-aligned, tight to the top breadcrumb
  * -------------------------------------------------------------------------- */
 .hero {
-  padding: 80px 0 60px;
-  text-align: center;
-  background: radial-gradient(ellipse at 50% 0%, rgba(102, 84, 241, 0.12) 0%, transparent 60%);
+  padding: 0 0 28px;
+  text-align: left;
+  background: none; /* no big radial gradient — Kostas's hero is flat */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 24px;
+}
+
+.heroInner {
+  max-width: 100%;
 }
 
 .heroTitle {
-  font-size: 3.5rem;
+  font-size: 2.6rem;
   font-weight: 700;
-  margin-bottom: 16px;
-  line-height: 1.1;
+  margin-bottom: 14px;
+  line-height: 1.15;
 }
 
 .heroSubtitle {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   opacity: 0.75;
-  max-width: 680px;
-  margin: 0 auto 32px;
-  line-height: 1.5;
+  margin-bottom: 22px;
+  line-height: 1.55;
+  max-width: 720px;
 }
 
 .heroButtons {
   display: flex;
-  gap: 16px;
-  justify-content: center;
+  gap: 12px;
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 
@@ -65,55 +73,63 @@
 }
 
 /* ----------------------------------------------------------------------------
- * Sections — base layout
+ * Sections — base layout (left-aligned)
  * -------------------------------------------------------------------------- */
 .section {
-  padding: 64px 0;
+  padding: 32px 0;
+  text-align: left;
+}
+
+/* Horizontal rule between consecutive sections (Kostas's pattern) —
+   first section follows the hero's bottom border, subsequent ones get
+   their own top border. */
+.section + .section {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sectionAlt {
-  background: rgba(255, 255, 255, 0.02);
+  /* No background tint — left-aligned sections sit flush, separated by
+     section title rhythm and bottom rule. */
 }
 
-/* small uppercase label sitting above the section title (Kostas pattern) */
 .sectionEyebrow {
-  text-align: center;
   font-family: 'Tomorrow', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #c4b5fd;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  text-align: left;
 }
 
 .sectionTitle {
-  text-align: center;
-  font-size: 2rem;
-  margin-bottom: 8px;
+  font-size: 1.7rem;
+  margin-bottom: 6px;
+  text-align: left;
 }
 
 .sectionSubtitle {
-  text-align: center;
   opacity: 0.7;
-  margin-bottom: 40px;
+  margin-bottom: 24px;
+  text-align: left;
 }
 
 /* ----------------------------------------------------------------------------
- * Pick Your Path — Jack's original audience cards (kept as-is)
+ * Pick Your Path — Jack's audience cards (no eyebrow, plain heading)
  * -------------------------------------------------------------------------- */
 .pathGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-  margin-top: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
 }
 
 .pathCard {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
-  padding: 24px;
+  padding: 20px;
   transition: all 0.2s ease;
 }
 
@@ -124,35 +140,35 @@
 }
 
 .pathCardEmoji {
-  font-size: 2rem;
-  margin-bottom: 12px;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
 }
 
 .pathCard h3 {
-  font-size: 1.2rem;
-  margin-bottom: 8px;
+  font-size: 1.1rem;
+  margin-bottom: 6px;
 }
 
 .pathCard p {
   opacity: 0.7;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   margin-bottom: 12px;
 }
 
 .pathCard a {
   font-family: 'Tomorrow', sans-serif;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 /* ----------------------------------------------------------------------------
- * Essentials — three numbered tutorial cards with step + time badges
+ * Essentials — Step 1/2/3 cards
  * -------------------------------------------------------------------------- */
 .essentialsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-top: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
 }
 
 .essentialCard {
@@ -161,7 +177,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
-  padding: 24px;
+  padding: 22px;
   transition: all 0.2s ease;
 }
 
@@ -175,12 +191,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .stepBadge {
   font-family: 'Tomorrow', sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -192,29 +208,29 @@
 }
 
 .timeBadge {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   opacity: 0.6;
 }
 
 .essentialCardTitle {
-  font-size: 1.25rem;
-  margin-bottom: 10px;
+  font-size: 1.18rem;
+  margin-bottom: 8px;
 }
 
 .essentialCardDesc {
   opacity: 0.7;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   line-height: 1.5;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   flex-grow: 1;
 }
 
 .startTutorialLink {
   font-family: 'Tomorrow', sans-serif;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: #04ffd1;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .startTutorialLink:hover {
@@ -233,7 +249,7 @@
 }
 
 .tagPill {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   padding: 3px 9px;
   border-radius: 999px;
   background: rgba(139, 124, 246, 0.12);
@@ -242,20 +258,20 @@
 }
 
 /* ----------------------------------------------------------------------------
- * By Topic — nine emoji-led category cards with sub-tutorial lists
+ * By Topic
  * -------------------------------------------------------------------------- */
 .topicGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-top: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
 }
 
 .topicCard {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
-  padding: 24px;
+  padding: 20px;
   transition: all 0.2s ease;
 }
 
@@ -265,19 +281,19 @@
 }
 
 .topicEmoji {
-  font-size: 2rem;
-  margin-bottom: 12px;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
 }
 
 .topicTitle {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   margin-bottom: 4px;
 }
 
 .topicTagline {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   opacity: 0.6;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .topicLinks {
@@ -291,7 +307,7 @@
 }
 
 .topicLinks li a {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: rgba(255, 255, 255, 0.75);
   text-decoration: none;
   transition: color 0.15s ease;
@@ -303,13 +319,13 @@
 }
 
 /* ----------------------------------------------------------------------------
- * Deep Dives — four wider learning-path cards
+ * Deep Dives
  * -------------------------------------------------------------------------- */
 .deepDiveGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: 20px;
-  margin-top: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
 }
 
 .deepDiveCard {
@@ -317,7 +333,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
-  padding: 28px;
+  padding: 24px;
   text-decoration: none;
   color: inherit;
   transition: all 0.2s ease;
@@ -334,7 +350,7 @@
 .lessonCountBadge {
   display: inline-block;
   font-family: 'Tomorrow', sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -343,19 +359,19 @@
   background: rgba(139, 124, 246, 0.12);
   color: #c4b5fd;
   border: 1px solid rgba(139, 124, 246, 0.25);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .deepDiveTitle {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   margin-bottom: 10px;
 }
 
 .deepDiveDesc {
   opacity: 0.75;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   line-height: 1.55;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 /* ----------------------------------------------------------------------------
@@ -363,19 +379,19 @@
  * -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
   .heroTitle {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .heroSubtitle {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .section {
-    padding: 48px 0;
+    padding: 24px 0;
   }
 
   .sectionTitle {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
   }
 
   .deepDiveGrid {

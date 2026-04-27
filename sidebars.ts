@@ -2,10 +2,44 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
   guideSidebar: [
+    // ----------------------------------------------------------------------
+    // START HERE — mirrors Kostas's prototype. Tutorials Home is the docs
+    // landing page (slug: /), and the three "Create Your First..." pages
+    // are the essential beginner tutorials. Each is flagged with the
+    // `sidebar-item-essential` className → shows a small "Essential" pill
+    // on the right (see custom.css).
+    // ----------------------------------------------------------------------
     {
       type: 'category',
-      label: 'Welcome',
+      label: 'Start Here',
       collapsed: false,
+      items: [
+        'learn-to-create',
+        {
+          type: 'doc',
+          id: 'start-here/create-your-first-experience',
+          className: 'sidebar-item-essential',
+        },
+        {
+          type: 'doc',
+          id: 'start-here/create-your-first-avatar',
+          className: 'sidebar-item-essential',
+        },
+        {
+          type: 'doc',
+          id: 'start-here/create-your-first-wearable',
+          className: 'sidebar-item-essential',
+        },
+      ],
+    },
+    // ----------------------------------------------------------------------
+    // ABOUT HELIX — was "Welcome". Background reading rather than
+    // first-tutorial onboarding, so collapsed by default.
+    // ----------------------------------------------------------------------
+    {
+      type: 'category',
+      label: 'About HELIX',
+      collapsed: true,
       items: [
         'intro/what-is-helix',
         'intro/why-helix',

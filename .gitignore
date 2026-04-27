@@ -18,6 +18,11 @@
 # Local build debugging output (captured via `npm run build:local 2>&1 > build-output.txt`)
 build-output.txt
 
+# Private working notes for the docs-merge effort.
+# Holds session state, decisions log, prototype refs.
+# Not pushed — content may include URLs/info the team isn't ready to disclose.
+/.dev-notes/
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
